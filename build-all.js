@@ -31,5 +31,8 @@ buildService('WEB', 'keenfresh-web', 'npm run build');
 // 4. Build KeenFresh Desktop
 buildService('DESKTOP', 'keenfresh-desktop', 'npm run build');
 
+// 5. Build KeenFresh Landing Page
+buildService('LANDING', 'keenfresh-landing', 'npm run build');
+
 console.log(`\n🎉 \x1b[1m\x1b[32mALL PROJECTS BUILT SUCCESSFULLY!\x1b[0m 🎉`);
 console.log(`👉 You can now run \`node start-all.js\` to launch the production-ready local system.\n`);
