@@ -1,11 +1,11 @@
 {
   "name": "keenfresh-shared",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "description": "",
   "main": "dist/index.js", "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo Building keenfresh-shared v1.8.4 && tsc"
+    "build": "echo Building keenfresh-shared v1.8.5 && tsc"
   },
   "keywords": [],
   "author": "",
