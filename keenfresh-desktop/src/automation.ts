@@ -1,6 +1,6 @@
 import { mouse, keyboard, screen, Point, Button, Key } from '@nut-tree-fork/nut-js';
 import { Socket } from 'socket.io-client';
-import { ClientToServerEvents, ServerToClientEvents } from 'flaro-shared';
+import { ClientToServerEvents, ServerToClientEvents } from 'keenfresh-shared';
 
   // Remove native artificial delay to ensure buttery smooth mouse movements
   mouse.config.autoDelayMs = 0;

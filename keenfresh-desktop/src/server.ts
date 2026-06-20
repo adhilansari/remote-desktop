@@ -13,7 +13,7 @@ import {
   SettingsSyncSchema,
   RoomJoinSchema,
   RoomPayload
-} from 'flaro-shared';
+} from 'keenfresh-shared';
 
 let currentPairingCode: string | null = null;
 let pairingCodeExpiresAt: number = 0;

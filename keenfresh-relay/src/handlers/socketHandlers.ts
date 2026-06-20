@@ -6,7 +6,7 @@ import {
   KeyEventSchema,
   SettingsSyncSchema,
   WebRTCSignalSchema,
-} from 'flaro-shared';
+} from 'keenfresh-shared';
 
 export function handleSocketEvents(socket: Socket, room: string) {
 

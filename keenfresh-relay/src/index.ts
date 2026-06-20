@@ -3,7 +3,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
-import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'flaro-shared';
+import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'keenfresh-shared';
 import { handleSocketEvents } from './handlers/socketHandlers';
 
 const app = express();

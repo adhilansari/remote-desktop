@@ -3,7 +3,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
-import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'flaro-shared';
+import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'keenfresh-shared';
 import {
   MouseMoveSchema,
   MouseClickSchema,
@@ -11,7 +11,7 @@ import {
   KeyEventSchema,
   SettingsSyncSchema,
   WebRTCSignalSchema,
-} from 'flaro-shared';
+} from 'keenfresh-shared';
 
 function handleSocketEvents(socket: Socket, room: string) {
   socket.on('mouse-move', (data) => {
