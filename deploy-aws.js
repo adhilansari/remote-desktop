@@ -26,7 +26,7 @@ const remoteCommands = `
   npm run build &&
   
   echo "\n--- Restarting Server ---" &&
-  pm2 restart all || (echo "PM2 not found or nothing to restart. Starting manually..." && npm start) &&
+  (pm2 restart keenfresh-relay || pm2 start dist/index.js --name keenfresh-relay) &&
   
   echo "\n✅ DEPLOYMENT COMPLETE! ✅"
 `;
