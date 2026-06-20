@@ -11,7 +11,7 @@ function PairingScreen({ onPaired }: { onPaired: (pin: string) => void }) {
 
   const handlePair = () => {
     if (code.length === 6) {
-      localStorage.setItem('flaro_pin', code);
+      localStorage.setItem('keenfresh_pin', code);
       onPaired(code);
     }
   };
@@ -27,7 +27,7 @@ function PairingScreen({ onPaired }: { onPaired: (pin: string) => void }) {
 }
 
 function App() {
-  const [pin, setPin] = useState<string | null>(localStorage.getItem('flaro_pin'));
+  const [pin, setPin] = useState<string | null>(localStorage.getItem('keenfresh_pin'));
   const [connected, setConnected] = useState(false);
   const [streamActive, setStreamActive] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>('trackpad');
@@ -87,7 +87,7 @@ function App() {
     socket.on('connect_error', (err) => {
       if (err.message === 'unauthorized') {
         setPin(null);
-        localStorage.removeItem('flaro_pin');
+        localStorage.removeItem('keenfresh_pin');
         alert("Session expired or revoked. Please pair again.");
       }
     });
@@ -778,7 +778,7 @@ function App() {
                   if (socketRef.current) socketRef.current.disconnect();
                   if (pcRef.current) pcRef.current.close();
                   setPin(null);
-                  localStorage.removeItem('flaro_pin');
+                  localStorage.removeItem('keenfresh_pin');
                   setStreamActive(false);
                   setActiveQualityMenu(false);
                 }}

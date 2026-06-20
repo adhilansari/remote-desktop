@@ -18,7 +18,7 @@ class Store {
   private config: AppConfig;
 
   constructor() {
-    this.configPath = path.join(app.getPath('userData'), 'flaro-config.json');
+    this.configPath = path.join(app.getPath('userData'), 'keenfresh-config.json');
     this.config = this.loadConfig();
   }
 
