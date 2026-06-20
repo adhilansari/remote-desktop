@@ -3,23 +3,23 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package.json files
-COPY package.json ./
-COPY flaro-shared/package.json ./flaro-shared/
-COPY flaro-relay/package.json ./flaro-relay/
+COPY keenfresh-shared/package.json ./keenfresh-shared/
+COPY keenfresh-relay/package.json ./keenfresh-relay/
 
-# Install dependencies (workspaces will link shared to relay)
-RUN npm install
+# Install dependencies in each folder
+RUN cd keenfresh-shared && npm install
+RUN cd keenfresh-relay && npm install
 
 # Copy source code
-COPY flaro-shared/ ./flaro-shared/
-COPY flaro-relay/ ./flaro-relay/
+COPY keenfresh-shared/ ./keenfresh-shared/
+COPY keenfresh-relay/ ./keenfresh-relay/
 
 # Build shared and relay
-RUN cd flaro-shared && npm run build
-RUN cd flaro-relay && npm run build
+RUN cd keenfresh-shared && npm run build
+RUN cd keenfresh-relay && npm run build
 
 # Expose Relay port
 EXPOSE 3000
 
 # Start the Relay Server
-CMD ["node", "flaro-relay/dist/server.js"]
+CMD ["node", "keenfresh-relay/dist/index.js"]
