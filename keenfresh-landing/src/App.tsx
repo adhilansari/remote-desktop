@@ -13,7 +13,7 @@ function App() {
             KeenFresh
           </div>
           <div>
-            <a href="#download" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+            <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
               <Download size={18} /> Get App
             </a>
           </div>
@@ -26,7 +26,7 @@ function App() {
           <p>
             Whether you are a developer compiling huge codebases, a professional rendering 4K video, or just someone who hates sitting hunched over a laptop—KeenFresh gives you complete control of your Windows PC from anywhere in the world using just your phone.
           </p>
-          <a href="#download" className="btn-primary">
+          <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary">
             <Download size={24} />
             Download for Windows
           </a>
@@ -108,10 +108,10 @@ function App() {
         <section id="download" className="highlight-section" style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(5, 5, 10, 0.5))' }}>
           <h2>Ready to Step Away?</h2>
           <p>Download the lightweight Windows client today and experience true freedom.</p>
-          <button className="btn-primary" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
+          <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
             <Download size={28} />
             Download KeenFresh Setup.exe
-          </button>
+          </a>
         </section>
 
         {/* Footer */}
