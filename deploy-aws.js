@@ -11,7 +11,7 @@ const server = 'ubuntu@13.207.194.101';
 // The exact commands to run on the AWS server
 const remoteCommands = `
   echo "--- Pulling latest code from GitHub ---" &&
-  cd remote-desktop || (echo "Repository not found! Did you clone it into ~/remote-desktop?" && exit 1) &&
+  (cd keenfresh || cd remote-desktop || (echo "Repository not found! Did you clone it into ~/keenfresh?" && exit 1)) &&
   git pull origin main &&
   
   echo "\n--- Building KeenFresh Shared ---" &&
