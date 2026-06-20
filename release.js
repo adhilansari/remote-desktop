@@ -4,10 +4,10 @@ const { execSync } = require('child_process');
 
 // The projects to build
 const projects = [
-  'flaro-shared',
-  'flaro-relay',
-  'flaro-desktop',
-  'flaro-web'
+  'keenfresh-shared',
+  'keenfresh-relay',
+  'keenfresh-desktop',
+  'keenfresh-web'
 ];
 
 // Helper to increment patch version
@@ -17,13 +17,13 @@ function incrementVersion(version) {
   return parts.join('.');
 }
 
-// 1. Read the current version from flaro-desktop
-const desktopPackageJsonPath = path.join(__dirname, 'flaro-desktop', 'package.json');
+// 1. Read the current version from keenfresh-desktop
+const desktopPackageJsonPath = path.join(__dirname, 'keenfresh-desktop', 'package.json');
 const desktopPkg = JSON.parse(fs.readFileSync(desktopPackageJsonPath, 'utf8'));
 const currentVersion = desktopPkg.version;
 const newVersion = incrementVersion(currentVersion);
 
-console.log(`[RELEASE] Bumping Flaro from v${currentVersion} to v${newVersion}...`);
+console.log(`[RELEASE] Bumping keenfresh from v${currentVersion} to v${newVersion}...`);
 
 // 2. Update package.json for all projects
 for (const project of projects) {
@@ -64,37 +64,37 @@ if (!fs.existsSync(releaseDir)) {
 // 5. Copy artifacts to the new versioned release directory
 console.log(`\n[RELEASE] Archiving builds to ${releaseDir}...`);
 
-// flaro-desktop (copy dist, package.json, and the built .exe)
-const desktopRelease = path.join(releaseDir, 'flaro-desktop');
+// keenfresh-desktop (copy dist, package.json, and the built .exe)
+const desktopRelease = path.join(releaseDir, 'keenfresh-desktop');
 fs.mkdirSync(desktopRelease, { recursive: true });
-execSync(`xcopy /E /I /Y "${path.join(__dirname, 'flaro-desktop', 'dist')}" "${path.join(desktopRelease, 'dist')}\\"`);
-fs.copyFileSync(path.join(__dirname, 'flaro-desktop', 'package.json'), path.join(desktopRelease, 'package.json'));
+execSync(`xcopy /E /I /Y "${path.join(__dirname, 'keenfresh-desktop', 'dist')}" "${path.join(desktopRelease, 'dist')}\\"`);
+fs.copyFileSync(path.join(__dirname, 'keenfresh-desktop', 'package.json'), path.join(desktopRelease, 'package.json'));
 
 console.log(`\n--- Packing Desktop Executable ---`);
-execSync('npm run pack', { cwd: path.join(__dirname, 'flaro-desktop'), stdio: 'inherit' });
-const exePath = path.join(__dirname, 'flaro-desktop', 'release', `Flaro ${newVersion}.exe`);
+execSync('npm run pack:win', { cwd: path.join(__dirname, 'keenfresh-desktop'), stdio: 'inherit' });
+const exePath = path.join(__dirname, 'keenfresh-desktop', 'release', `KeenFresh Setup ${newVersion}.exe`);
 if (fs.existsSync(exePath)) {
-  fs.copyFileSync(exePath, path.join(releaseDir, `Flaro v${newVersion}.exe`));
-  console.log(`[RELEASE] Copied executable to ${path.join(releaseDir, `Flaro v${newVersion}.exe`)}`);
+  fs.copyFileSync(exePath, path.join(releaseDir, `KeenFresh v${newVersion}.exe`));
+  console.log(`[RELEASE] Copied executable to ${path.join(releaseDir, `KeenFresh v${newVersion}.exe`)}`);
 } else {
   console.log(`[RELEASE] Warning: Could not find executable at ${exePath}`);
 }
 
-// flaro-web (copy dist)
-const webRelease = path.join(releaseDir, 'flaro-web');
+// keenfresh-web (copy dist)
+const webRelease = path.join(releaseDir, 'keenfresh-web');
 fs.mkdirSync(webRelease, { recursive: true });
-execSync(`xcopy /E /I /Y "${path.join(__dirname, 'flaro-web', 'dist')}" "${webRelease}\\"`);
+execSync(`xcopy /E /I /Y "${path.join(__dirname, 'keenfresh-web', 'dist')}" "${webRelease}\\"`);
 
-// flaro-relay (copy dist and package.json)
-const relayRelease = path.join(releaseDir, 'flaro-relay');
+// keenfresh-relay (copy dist and package.json)
+const relayRelease = path.join(releaseDir, 'keenfresh-relay');
 fs.mkdirSync(relayRelease, { recursive: true });
-execSync(`xcopy /E /I /Y "${path.join(__dirname, 'flaro-relay', 'dist')}" "${path.join(relayRelease, 'dist')}\\"`);
-fs.copyFileSync(path.join(__dirname, 'flaro-relay', 'package.json'), path.join(relayRelease, 'package.json'));
+execSync(`xcopy /E /I /Y "${path.join(__dirname, 'keenfresh-relay', 'dist')}" "${path.join(relayRelease, 'dist')}\\"`);
+fs.copyFileSync(path.join(__dirname, 'keenfresh-relay', 'package.json'), path.join(relayRelease, 'package.json'));
 
-// flaro-shared (copy dist and package.json)
-const sharedRelease = path.join(releaseDir, 'flaro-shared');
+// keenfresh-shared (copy dist and package.json)
+const sharedRelease = path.join(releaseDir, 'keenfresh-shared');
 fs.mkdirSync(sharedRelease, { recursive: true });
-execSync(`xcopy /E /I /Y "${path.join(__dirname, 'flaro-shared', 'dist')}" "${path.join(sharedRelease, 'dist')}\\"`);
-fs.copyFileSync(path.join(__dirname, 'flaro-shared', 'package.json'), path.join(sharedRelease, 'package.json'));
+execSync(`xcopy /E /I /Y "${path.join(__dirname, 'keenfresh-shared', 'dist')}" "${path.join(sharedRelease, 'dist')}\\"`);
+fs.copyFileSync(path.join(__dirname, 'keenfresh-shared', 'package.json'), path.join(sharedRelease, 'package.json'));
 
 console.log(`\n[RELEASE] Successfully created release v${newVersion} without deleting older versions!`);
