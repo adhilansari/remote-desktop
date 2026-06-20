@@ -1,0 +1,940 @@
+import { useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+import './App.css';
+
+type ControlMode = 'trackpad' | 'direct';
+
+
+
+function PairingScreen({ onPaired }: { onPaired: (pin: string) => void }) {
+  const [code, setCode] = useState('');
+
+  const handlePair = () => {
+    if (code.length === 6) {
+      localStorage.setItem('flaro_pin', code);
+      onPaired(code);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#f8fafc', padding: '20px', textAlign: 'center' }}>
+      <h2>Pair Device</h2>
+      <p style={{ color: '#94a3b8', marginBottom: '20px' }}>Enter the 6-digit PIN shown on your Flaro Desktop.</p>
+      <input type="text" value={code} onChange={e => setCode(e.target.value)} placeholder="000000" style={{ fontSize: '32px', padding: '10px', textAlign: 'center', letterSpacing: '8px', borderRadius: '12px', border: '1px solid #38bdf8', background: 'transparent', color: '#fff', width: '200px', marginBottom: '20px' }} maxLength={6} />
+      <button onClick={handlePair} style={{ padding: '15px 30px', fontSize: '18px', background: '#38bdf8', color: '#000', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Connect to Relay</button>
+    </div>
+  );
+}
+
+function App() {
+  const [pin, setPin] = useState<string | null>(localStorage.getItem('flaro_pin'));
+  const [connected, setConnected] = useState(false);
+  const [streamActive, setStreamActive] = useState(false);
+  const [controlMode, setControlMode] = useState<ControlMode>('trackpad');
+  const [activeModifiers, setActiveModifiers] = useState<string[]>([]);
+  const [showUI, setShowUI] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [keyboardText, setKeyboardText] = useState('');
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  
+  // Video transform states
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [autoFocus, setAutoFocus] = useState(false);
+
+  // Display & Quality States
+  const [desktopSources, setDesktopSources] = useState<{id: string, name: string}[]>([]);
+  const [activeQualityMenu, setActiveQualityMenu] = useState(false);
+  const [autoFillEnabled, setAutoFillEnabled] = useState(true);
+  const [showDesktopSwitcher, setShowDesktopSwitcher] = useState(false);
+  const [currentQuality, setCurrentQuality] = useState('1080p60');
+  const [currentSourceId, setCurrentSourceId] = useState<string | null>(null);
+
+  // Ribbon state
+  const ribbonRef = useRef<HTMLDivElement>(null);
+  const [showRibbonLeft, setShowRibbonLeft] = useState(false);
+  const [showRibbonRight, setShowRibbonRight] = useState(true);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const dcRef = useRef<RTCDataChannel | null>(null);
+  
+  // High-performance Gesture Refs (No React State)
+  const lastTouch = useRef({ x: 0, y: 0 });
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const touchStartTime = useRef(0);
+  const maxTouchMoveDist = useRef(0);
+  const initialPinchDist = useRef(0);
+  const lastPanCenter = useRef({ x: 0, y: 0 });
+  const tapTimer = useRef<number | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+  const tapCount = useRef(0);
+  const isDragging = useRef(false);
+  const maxTouches = useRef(0);
+  const cursorPctRef = useRef({ x: 0.5, y: 0.5 });
+
+  useEffect(() => {
+    if (!pin) return;
+
+    const origin = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'wss://relay.keenfresh.com';
+    const socket = io(origin, {
+      transports: ['websocket', 'polling']
+    });
+    socketRef.current = socket;
+
+    socket.on('connect_error', (err) => {
+      if (err.message === 'unauthorized') {
+        setPin(null);
+        localStorage.removeItem('flaro_pin');
+        alert("Session expired or revoked. Please pair again.");
+      }
+    });
+
+    socket.on('connect', () => {
+      setConnected(true);
+      socket.emit('join-room', { pin, clientType: 'mobile' });
+    });
+
+    socket.on('disconnect', () => {
+      setConnected(false);
+      setStreamActive(false);
+    });
+
+    socket.on('webrtc-signal', async (data: any) => {
+      let pc = pcRef.current;
+      if (!pc) {
+        pc = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        pcRef.current = pc;
+
+        pc.onicecandidate = (e) => {
+          if (e.candidate) {
+            socket.emit('webrtc-signal', { type: 'candidate', candidate: e.candidate });
+          }
+        };
+
+        pc.ontrack = (e) => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = e.streams[0];
+            setStreamActive(true);
+          }
+        };
+
+        pc.ondatachannel = (e) => {
+          dcRef.current = e.channel;
+          e.channel.onmessage = (msgEvent) => {
+            try {
+              const msg = JSON.parse(msgEvent.data);
+              if (msg.type === 'clipboard-sync' && msg.data?.text) {
+                navigator.clipboard.writeText(msg.data.text).catch(err => console.error("Clipboard write failed", err));
+                alert("Desktop clipboard synced to mobile!");
+              } else if (msg.type === 'desktop-sources') {
+                setDesktopSources(msg.data);
+                if (msg.data.length > 0) {
+                  setCurrentSourceId(prev => prev || msg.data[0].id);
+                }
+              } else if (msg.type === 'cursor-sync') {
+                cursorPctRef.current = { x: msg.data.xPct, y: msg.data.yPct };
+              }
+            } catch (err) {}
+          };
+        };
+      }
+
+      if (data.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('webrtc-signal', { type: 'answer', answer });
+      } else if (data.type === 'candidate' && data.candidate) {
+        if (data.candidate.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error('ICE', e));
+        }
+      }
+    });
+
+    return () => {
+      sendInput('release-all-keys', {});
+      socket.disconnect();
+      pcRef.current?.close();
+    };
+  }, [pin]);
+
+  // --- Auto-Focus Engine ---
+  useEffect(() => {
+    if (!autoFocus || scale <= 1) return;
+    
+    let animationFrame: number;
+    const updateFocus = () => {
+      const video = videoRef.current;
+      if (!video) return;
+      
+      // Need unscaled dimensions for calculation
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+
+      // Calculate video aspect ratio fitting
+      const videoRatio = video.videoWidth / video.videoHeight || 16/9;
+      const elementRatio = screenW / screenH;
+      
+      let displayedWidth = screenW;
+      let displayedHeight = screenH;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (videoRatio > elementRatio) {
+        displayedHeight = screenW / videoRatio;
+        offsetY = (screenH - displayedHeight) / 2;
+      } else {
+        displayedWidth = screenH * videoRatio;
+        offsetX = (screenW - displayedWidth) / 2;
+      }
+
+      // Cursor's physical coordinate in unscaled screen space
+      const cursorX = offsetX + displayedWidth * cursorPctRef.current.x;
+      const cursorY = offsetY + displayedHeight * cursorPctRef.current.y;
+      
+      // We want to keep the cursor within a 20% padded bounding box of the physical screen
+      // However, the screen is scaled. 
+      // The physical screen coordinates of the viewport bounds in unscaled space are modified by pan and scale.
+      
+      // Let's just do a simpler continuous smooth follow if cursor is out of bounds
+      // Center of screen:
+      const cx = screenW / 2;
+      const cy = screenH / 2;
+      
+      // We want pan to approach (- (cursorX - cx), - (cursorY - cy))
+      const targetPanX = -(cursorX - cx);
+      const targetPanY = -(cursorY - cy);
+      
+      setPan(prev => {
+        // Smooth lerp towards target
+        const diffX = targetPanX - prev.x;
+        const diffY = targetPanY - prev.y;
+        
+        // Only move if significantly far (creates a deadzone)
+        const distance = Math.hypot(diffX, diffY);
+        // scaled deadzone
+        if (distance < 20 / scale) return prev;
+        
+        return {
+          x: prev.x + diffX * 0.1,
+          y: prev.y + diffY * 0.1
+        };
+      });
+      
+      animationFrame = requestAnimationFrame(updateFocus);
+    };
+    
+    animationFrame = requestAnimationFrame(updateFocus);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [autoFocus, scale]);
+
+  const handleRibbonScroll = () => {
+    if (ribbonRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = ribbonRef.current;
+      setShowRibbonLeft(scrollLeft > 5);
+      setShowRibbonRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    handleRibbonScroll();
+    window.addEventListener('resize', handleRibbonScroll);
+    return () => window.removeEventListener('resize', handleRibbonScroll);
+  }, [activeModifiers]);
+
+  const sendInput = (type: string, data?: any) => {
+    if (dcRef.current && dcRef.current.readyState === 'open') {
+      dcRef.current.send(JSON.stringify({ type, data }));
+    }
+  };
+
+  const toggleModifier = (key: string) => {
+    setActiveModifiers(prev => {
+      if (prev.includes(key)) {
+        sendInput('key-event', { action: 'up', key });
+        return prev.filter(k => k !== key);
+      } else {
+        sendInput('key-event', { action: 'down', key });
+        return [...prev, key];
+      }
+    });
+  };
+
+  const getDistance = (t1: React.Touch, t2: React.Touch) => {
+    return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  };
+
+  const getCenter = (t1: React.Touch, t2: React.Touch) => {
+    return {
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2
+    };
+  };
+
+  const applyAutoFill = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const screenRatio = window.innerWidth / window.innerHeight;
+    const videoRatio = video.videoWidth / video.videoHeight;
+    if (!videoRatio) return;
+    
+    let coverScale = 1;
+    if (screenRatio > videoRatio) {
+      coverScale = screenRatio / videoRatio;
+    } else {
+      coverScale = videoRatio / screenRatio;
+    }
+    
+    setScale(coverScale + 0.02);
+    setPan({x: 0, y: 0});
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (autoFillEnabled) applyAutoFill();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [autoFillEnabled]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // If they manually touch/zoom, disable auto fill so we don't clobber it on resize
+    if (e.touches.length >= 2) {
+      setAutoFillEnabled(false);
+    }
+    if (activeQualityMenu) setActiveQualityMenu(false);
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      setAudioEnabled(true);
+    }
+
+    // Spawn visual ripples for each touch point
+    for (let i = 0; i < e.touches.length; i++) {
+      const touch = e.touches[i];
+      const ripple = document.createElement('div');
+      ripple.className = 'touch-ripple';
+      ripple.style.left = `${touch.clientX}px`;
+      ripple.style.top = `${touch.clientY}px`;
+      document.body.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 400);
+    }
+
+    const touchCount = e.touches.length;
+    maxTouches.current = Math.max(maxTouches.current, touchCount);
+
+    if (touchCount === 1) {
+      touchStartTime.current = performance.now();
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      maxTouchMoveDist.current = 0;
+      
+      tapCount.current += 1;
+      
+      if (tapCount.current === 1) {
+        if (tapTimer.current) clearTimeout(tapTimer.current);
+        
+        // Start long-press detection
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+        longPressTimer.current = window.setTimeout(() => {
+          if (maxTouchMoveDist.current < 10) {
+            isDragging.current = true;
+            sendInput('mouse-down', { button: 'left' });
+            if (navigator.vibrate) navigator.vibrate(50);
+          }
+        }, 500);
+      } else if (tapCount.current === 2) {
+        if (tapTimer.current) clearTimeout(tapTimer.current);
+        if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+        isDragging.current = false;
+      }
+    } else if (touchCount === 2) {
+      if (tapTimer.current) { clearTimeout(tapTimer.current); tapCount.current = 0; }
+      if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+      isDragging.current = false;
+      touchStartPos.current = getCenter(e.touches[0], e.touches[1]);
+      touchStartTime.current = performance.now();
+      maxTouchMoveDist.current = 0;
+      
+      initialPinchDist.current = getDistance(e.touches[0], e.touches[1]);
+      lastPanCenter.current = getCenter(e.touches[0], e.touches[1]);
+    } else if (touchCount === 3) {
+      if (tapTimer.current) { clearTimeout(tapTimer.current); tapCount.current = 0; }
+      if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+      isDragging.current = false;
+      touchStartPos.current = getCenter(e.touches[0], e.touches[1]);
+      touchStartTime.current = performance.now();
+      maxTouchMoveDist.current = 0;
+      lastPanCenter.current = getCenter(e.touches[0], e.touches[1]);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - lastTouch.current.x;
+      const dy = e.touches[0].clientY - lastTouch.current.y;
+      
+      const distFromStart = Math.hypot(e.touches[0].clientX - touchStartPos.current.x, e.touches[0].clientY - touchStartPos.current.y);
+      maxTouchMoveDist.current = Math.max(maxTouchMoveDist.current, distFromStart);
+      
+      if (maxTouchMoveDist.current >= 10 && longPressTimer.current && !isDragging.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+
+      if (controlMode === 'trackpad') {
+        const distance = Math.hypot(dx, dy);
+        const accel = 1 + (distance * 0.015); // gentle dynamic acceleration
+        const finalDx = dx * accel * 1.5;
+        const finalDy = dy * accel * 1.5;
+        
+        if (Math.abs(finalDx) > 0.5 || Math.abs(finalDy) > 0.5) {
+          sendInput('mouse-move', { dx: finalDx, dy: finalDy });
+        }
+        
+        // Auto-Follow Cursor Area when Zoomed
+        if (scale > 1) {
+          // Pan camera in opposite direction of movement to follow the cursor natively
+          setPan(prev => ({ 
+            x: prev.x - (dx * accel) / scale, 
+            y: prev.y - (dy * accel) / scale 
+          }));
+        }
+      } else if (controlMode === 'direct') {
+        const video = videoRef.current;
+        if (video) {
+          const rect = video.getBoundingClientRect();
+          const videoRatio = video.videoWidth / video.videoHeight || 16/9;
+          const elementRatio = rect.width / rect.height;
+          
+          let displayedWidth = rect.width;
+          let displayedHeight = rect.height;
+          let offsetX = 0;
+          let offsetY = 0;
+
+          if (videoRatio > elementRatio) {
+            displayedHeight = rect.width / videoRatio;
+            offsetY = (rect.height - displayedHeight) / 2;
+          } else {
+            displayedWidth = rect.height * videoRatio;
+            offsetX = (rect.width - displayedWidth) / 2;
+          }
+
+          let trueX = e.touches[0].clientX - rect.left - offsetX;
+          let trueY = e.touches[0].clientY - rect.top - offsetY;
+
+          trueX = Math.max(0, Math.min(displayedWidth, trueX));
+          trueY = Math.max(0, Math.min(displayedHeight, trueY));
+
+          const xPct = trueX / displayedWidth;
+          const yPct = trueY / displayedHeight;
+
+          sendInput('mouse-absolute', { x: xPct, y: yPct });
+        }
+      }
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } 
+    else if (e.touches.length === 2) {
+      const currentDist = getDistance(e.touches[0], e.touches[1]);
+      const currentCenter = getCenter(e.touches[0], e.touches[1]);
+      
+      const distFromStart = Math.hypot(currentCenter.x - touchStartPos.current.x, currentCenter.y - touchStartPos.current.y);
+      maxTouchMoveDist.current = Math.max(maxTouchMoveDist.current, distFromStart);
+
+      const distDelta = Math.abs(currentDist - initialPinchDist.current);
+      
+      if (distDelta > 20) {
+        // Pinch to Zoom
+        const scaleFactor = currentDist / initialPinchDist.current;
+        setScale(prev => Math.min(Math.max(1, prev * scaleFactor), 5));
+        initialPinchDist.current = currentDist;
+      } else {
+        // Panning or Scrolling
+        const dx = currentCenter.x - lastPanCenter.current.x;
+        const dy = currentCenter.y - lastPanCenter.current.y;
+        
+        if (scale > 1) {
+          setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+        } else {
+          // Scroll (Two-Finger Drag)
+          // Scale down the pixel delta so the scroll feels natural and not extremely fast
+          const scrollAmount = Math.max(1, Math.floor(Math.abs(dy) * 0.15));
+          sendInput('mouse-scroll', { direction: dy > 0 ? 'up' : 'down', amount: scrollAmount });
+        }
+      }
+      lastPanCenter.current = currentCenter;
+    } else if (e.touches.length === 3) {
+      // Three-Finger Pan or Swipe Down
+      const currentCenter = getCenter(e.touches[0], e.touches[1]);
+      const dx = currentCenter.x - lastPanCenter.current.x;
+      const dy = currentCenter.y - lastPanCenter.current.y;
+      
+      const totalDy = currentCenter.y - touchStartPos.current.y;
+      if (totalDy > 50 && !showUI) {
+        setShowUI(true); // 3-finger swipe down to show UI
+      } else if (scale > 1) {
+        setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      }
+      lastPanCenter.current = currentCenter;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    const isTap = maxTouchMoveDist.current < 10 && (performance.now() - touchStartTime.current) < 400;
+
+    if (e.touches.length === 0) {
+      // All fingers lifted
+      const touchCount = maxTouches.current;
+      maxTouches.current = 0; // reset for next gesture
+
+      if (isDragging.current) {
+        sendInput('mouse-up', { button: 'left' });
+        isDragging.current = false;
+        tapCount.current = 0;
+        return;
+      }
+
+      if (touchCount === 1) {
+        if (isTap) {
+          if (controlMode === 'direct') {
+            // Direct Touch Mode: Instant click, bypass queue
+            const video = videoRef.current;
+            if (video) {
+              const rect = video.getBoundingClientRect();
+              const videoRatio = video.videoWidth / video.videoHeight || 16/9;
+              const elementRatio = rect.width / rect.height;
+              
+              let displayedWidth = rect.width;
+              let displayedHeight = rect.height;
+              let offsetX = 0;
+              let offsetY = 0;
+
+              if (videoRatio > elementRatio) {
+                displayedHeight = rect.width / videoRatio;
+                offsetY = (rect.height - displayedHeight) / 2;
+              } else {
+                displayedWidth = rect.height * videoRatio;
+                offsetX = (rect.width - displayedWidth) / 2;
+              }
+
+              let trueX = e.changedTouches[0].clientX - rect.left - offsetX;
+              let trueY = e.changedTouches[0].clientY - rect.top - offsetY;
+
+              trueX = Math.max(0, Math.min(displayedWidth, trueX));
+              trueY = Math.max(0, Math.min(displayedHeight, trueY));
+
+              const xPct = trueX / displayedWidth;
+              const yPct = trueY / displayedHeight;
+
+              sendInput('mouse-absolute', { x: xPct, y: yPct });
+            }
+            sendInput('mouse-click', { button: 'left' });
+            tapCount.current = 0;
+            if (tapTimer.current) clearTimeout(tapTimer.current);
+          } else {
+            // Trackpad Mode: 300ms queue for Double Click detection
+            if (tapCount.current === 1) {
+              tapTimer.current = window.setTimeout(() => {
+                sendInput('mouse-click', { button: 'left' });
+                tapCount.current = 0;
+              }, 300);
+            } else if (tapCount.current === 2) {
+              sendInput('mouse-double-click', { button: 'left' });
+              tapCount.current = 0;
+            }
+          }
+        } else {
+          tapCount.current = 0;
+        }
+      } else if (touchCount === 2) {
+        // Right Click (Two-Finger Tap)
+        if (isTap) sendInput('mouse-click', { button: 'right' });
+      } else if (touchCount === 3) {
+        // 3-Finger Tap toggles UI
+        if (isTap) setShowUI(prev => !prev);
+      }
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      if (screen.orientation && (screen.orientation as any).lock) {
+        (screen.orientation as any).lock('landscape').catch(() => {});
+      }
+    } else {
+      document.exitFullscreen().catch(() => {});
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
+    }
+  };
+
+  if (!pin) {
+    return <PairingScreen onPaired={setPin} />;
+  }
+
+  return (
+    <div className="app-container">
+      <div className="video-container" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
+        <video
+          ref={videoRef}
+          onLoadedMetadata={() => { if (autoFillEnabled) applyAutoFill(); }}
+          autoPlay
+          playsInline
+          muted={!audioEnabled}
+          className="stream-video"
+          style={{ display: streamActive ? 'block' : 'none', objectFit: 'contain' }}
+        />
+      </div>
+      
+      {!streamActive && (
+        <div className="status-overlay">
+          {connected ? 'Waiting for Desktop Stream...' : 'Connecting...'}
+        </div>
+      )}
+
+      {/* Invisible Touch Area */}
+      <div 
+        className="joystick-area"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      />
+
+      {/* UI Toggle Button */}
+      <button 
+        className="ui-toggle-btn"
+        onClick={() => setShowUI(!showUI)}
+      >
+        {showUI ? '👁️' : '🫣'}
+      </button>
+
+      {showUI && (
+        <>
+          {/* Floating Dock (Combines top-bar and side-controls) */}
+          <div className="floating-dock">
+            {/* Audio Toggle */}
+            <button 
+              className={`icon-btn ${audioEnabled ? 'active-icon' : ''}`}
+              onClick={() => {
+                setAudioEnabled(!audioEnabled);
+                setHasInteracted(true);
+              }}
+            >{audioEnabled ? '🔊' : '🔇'}</button>
+
+            {/* Smart Zoom / Auto-Focus Toggle */}
+            <button 
+              className={`icon-btn ${autoFocus ? 'active-icon' : ''}`}
+              onClick={() => {
+                if (autoFocus && scale > 1) {
+                  // Zoom out
+                  setScale(1);
+                  setPan({ x: 0, y: 0 });
+                  setAutoFocus(false);
+                } else {
+                  // Zoom in to cursor
+                  const video = videoRef.current;
+                  if (video) {
+                    const screenW = window.innerWidth;
+                    const screenH = window.innerHeight;
+                    const videoRatio = video.videoWidth / video.videoHeight || 16/9;
+                    const elementRatio = screenW / screenH;
+                    let displayedWidth = screenW; let displayedHeight = screenH;
+                    let offsetX = 0; let offsetY = 0;
+                    if (videoRatio > elementRatio) {
+                      displayedHeight = screenW / videoRatio;
+                      offsetY = (screenH - displayedHeight) / 2;
+                    } else {
+                      displayedWidth = screenH * videoRatio;
+                      offsetX = (screenW - displayedWidth) / 2;
+                    }
+                    const cursorX = offsetX + displayedWidth * cursorPctRef.current.x;
+                    const cursorY = offsetY + displayedHeight * cursorPctRef.current.y;
+                    const cx = screenW / 2;
+                    const cy = screenH / 2;
+                    setScale(2.5);
+                    setPan({ x: -(cursorX - cx), y: -(cursorY - cy) });
+                    setAutoFocus(true);
+                  }
+                }
+              }}
+            >{autoFocus ? '🔍' : '🔎'}</button>
+
+            {/* Fullscreen Toggle */}
+            <button 
+              className="icon-btn"
+              onClick={toggleFullscreen}
+            >⤢</button>
+            
+            {/* Fit Mode Toggle */}
+            <button 
+              className={`icon-btn ${autoFillEnabled ? 'active-icon' : ''}`}
+              onClick={() => {
+                const newState = !autoFillEnabled;
+                setAutoFillEnabled(newState);
+                if (newState) {
+                  applyAutoFill();
+                } else {
+                  setScale(1);
+                  setPan({x:0, y:0});
+                }
+              }}
+            >{autoFillEnabled ? '🔲' : '🔳'}</button>
+            
+            {/* Displays Menu Toggle */}
+            <button className="icon-btn" onClick={() => { setShowDesktopSwitcher(true); setActiveQualityMenu(false); }}>🖥️</button>
+
+            {/* Quality Menu Toggle */}
+            <button className="icon-btn" onClick={() => { setActiveQualityMenu(!activeQualityMenu); }}>⚙️</button>
+
+            {/* Start Menu Button */}
+            <button className="icon-btn" onClick={() => {
+              sendInput('shortcut', { keys: ['super'] });
+            }} title="Start Menu">⊞</button>
+            
+            {/* Task View (Win+Tab) Button */}
+            <button className="icon-btn" onClick={() => {
+              sendInput('shortcut', { keys: ['super', 'tab'] });
+            }} title="Task View">🗂️</button>
+
+            <button className="icon-btn" onClick={() => {
+              setShowKeyboard(!showKeyboard);
+              if (showKeyboard) {
+                // If we are hiding it, release keys just in case
+                sendInput('release-all-keys', {});
+                setActiveModifiers([]);
+              }
+            }}>⌨</button>
+            <button className="icon-btn" onClick={() => {
+              navigator.clipboard.readText().then(text => {
+                sendInput('clipboard-sync', { text });
+              }).catch(() => alert("Failed to read mobile clipboard."));
+            }}>📋</button>
+          </div>
+
+          {/* Quality & Settings Menu Modal */}
+          {activeQualityMenu && (
+            <div className="glass-menu">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Settings</h3>
+                <button className="icon-btn" style={{ width: '30px', height: '30px', fontSize: '14px' }} onClick={() => setActiveQualityMenu(false)}>✕</button>
+              </div>
+
+              <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '1px' }}>Stream Quality</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                {['1080p60', '720p30', '480p15'].map(q => (
+                  <button 
+                    key={q} 
+                    className={`glass-menu-item ${currentQuality === q ? 'active' : ''}`}
+                    onClick={() => {
+                      setCurrentQuality(q);
+                      sendInput('change-quality', { quality: q });
+                      setActiveQualityMenu(false);
+                    }}
+                    style={{ padding: '10px 5px', fontSize: '13px', textAlign: 'center' }}
+                  >
+                    {q === '1080p60' ? 'High' : q === '720p30' ? 'Balanced' : 'Data Saver'}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ fontSize: '12px', opacity: 0.7, margin: '15px 0 5px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Input Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button 
+                  className={`glass-menu-item ${controlMode === 'trackpad' ? 'active' : ''}`}
+                  onClick={() => {
+                    setControlMode('trackpad');
+                    setActiveQualityMenu(false);
+                  }}
+                  style={{ padding: '10px 5px', fontSize: '13px', textAlign: 'center' }}
+                >Trackpad</button>
+                <button 
+                  className={`glass-menu-item ${controlMode === 'direct' ? 'active' : ''}`}
+                  onClick={() => {
+                    setControlMode('direct');
+                    setScale(1);
+                    setPan({x:0, y:0});
+                    setActiveQualityMenu(false);
+                  }}
+                  style={{ padding: '10px 5px', fontSize: '13px', textAlign: 'center' }}
+                >Direct Touch</button>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '20px 0 10px 0' }} />
+              
+              <button 
+                onClick={() => {
+                  if (socketRef.current) socketRef.current.disconnect();
+                  if (pcRef.current) pcRef.current.close();
+                  setPin(null);
+                  localStorage.removeItem('flaro_pin');
+                  setStreamActive(false);
+                  setActiveQualityMenu(false);
+                }}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  color: '#f87171',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontWeight: 'bold',
+                  fontSize: '15px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>🔓</span> Disconnect Session
+              </button>
+            </div>
+          )}
+
+          {/* Modifier Ribbon Wrapper */}
+          <div className="modifier-ribbon-wrapper">
+            {showRibbonLeft && (
+              <button className="icon-btn" style={{ width: '32px', height: '32px', fontSize: '14px', flexShrink: 0 }} onClick={() => ribbonRef.current?.scrollBy({ left: -150, behavior: 'smooth' })}>◀</button>
+            )}
+            <div className="modifier-ribbon" ref={ribbonRef} onScroll={handleRibbonScroll} style={{ position: 'static', transform: 'none', background: 'none', border: 'none', padding: '0', boxShadow: 'none' }}>
+              {['control', 'alt', 'shift', 'super', 'escape', 'delete'].map(key => (
+                <button 
+                  key={key}
+                  className={`mod-btn ${activeModifiers.includes(key) ? 'active' : ''}`}
+                  onClick={() => toggleModifier(key)}
+                >
+                  {key === 'control' ? 'Ctrl' : key === 'super' ? 'Win' : key === 'escape' ? 'Esc' : key === 'delete' ? 'Del' : key.charAt(0).toUpperCase() + key.slice(1)}
+                </button>
+              ))}
+              <button 
+                className="mod-btn"
+                style={{ background: 'rgba(239, 68, 68, 0.4)' }}
+                onClick={() => {
+                  sendInput('release-all-keys', {});
+                  setActiveModifiers([]);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+            {showRibbonRight && (
+              <button className="icon-btn" style={{ width: '32px', height: '32px', fontSize: '14px', flexShrink: 0 }} onClick={() => ribbonRef.current?.scrollBy({ left: 150, behavior: 'smooth' })}>▶</button>
+            )}
+          </div>
+
+          {/* Scroll Controls */}
+          <div className="scroll-controls">
+            <button className="icon-btn" style={{ fontSize: '20px', padding: '15px 20px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'up', amount: 15 }); }}>▲</button>
+            <button className="icon-btn" style={{ fontSize: '20px', padding: '15px 20px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'down', amount: 15 }); }}>▼</button>
+          </div>
+
+          {/* Reset Zoom Button */}
+          {scale > 1 && (
+            <button 
+              className="reset-zoom-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setScale(1); 
+                setPan({x:0, y:0}); 
+                setAutoFocus(false);
+              }}
+            >
+              Reset Zoom
+            </button>
+          )}
+
+          {/* Keyboard Overlay */}
+          {showKeyboard && (
+            <div className="keyboard-overlay">
+              <input 
+                type="text" 
+                value={keyboardText}
+                onChange={(e) => setKeyboardText(e.target.value)}
+                placeholder="Type to send to desktop..."
+                className="keyboard-input"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (keyboardText) {
+                      sendInput('type-text', { text: keyboardText });
+                    }
+                    sendInput('key-event', { action: 'down', key: 'enter' });
+                    setTimeout(() => sendInput('key-event', { action: 'up', key: 'enter' }), 50);
+                    setKeyboardText('');
+                    setShowKeyboard(false);
+                  }
+                }}
+              />
+              <button 
+                className="keyboard-send-btn"
+                onClick={() => {
+                  if (keyboardText) {
+                    sendInput('type-text', { text: keyboardText });
+                  }
+                  sendInput('key-event', { action: 'down', key: 'enter' });
+                  setTimeout(() => sendInput('key-event', { action: 'up', key: 'enter' }), 50);
+                  setKeyboardText('');
+                  setShowKeyboard(false);
+                }}
+              >Send</button>
+            </div>
+          )}
+
+          {/* Desktop Switcher Overlay */}
+          {showDesktopSwitcher && (
+            <div className="desktop-switcher-overlay">
+              <button className="close-switcher-btn" onClick={() => setShowDesktopSwitcher(false)}>✕</button>
+              <div className="desktop-switcher-title">Switch Desktop</div>
+              
+              <div className="desktop-cards-container">
+                {desktopSources.length > 0 ? desktopSources.map(source => (
+                  <div 
+                    key={source.id} 
+                    className={`desktop-card ${currentSourceId === source.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setCurrentSourceId(source.id);
+                      sendInput('switch-display', { sourceId: source.id });
+                      setShowDesktopSwitcher(false);
+                    }}
+                  >
+                    <div className="desktop-card-icon">🖥️</div>
+                    <div className="desktop-card-name">{source.name}</div>
+                  </div>
+                )) : <div style={{ color: '#aaa' }}>No additional displays found</div>}
+              </div>
+
+              <div className="virtual-desktop-controls">
+                <button className="virtual-desktop-btn" onClick={() => {
+                  sendInput('shortcut', { keys: ['super', 'control', 'left'] });
+                  if (navigator.vibrate) navigator.vibrate(50);
+                }}>
+                  ← Prev Virtual Desktop
+                </button>
+                <button className="virtual-desktop-btn" onClick={() => {
+                  sendInput('shortcut', { keys: ['super', 'control', 'right'] });
+                  if (navigator.vibrate) navigator.vibrate(50);
+                }}>
+                  Next Virtual Desktop →
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default App;

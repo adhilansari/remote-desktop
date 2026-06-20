@@ -1,0 +1,14 @@
+{
+  "appId": "com.flaro.desktop",
+  "productName": "Flaro Desktop",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "src/index.html"
+  ],
+  "win": {
+    "target": "nsis"
+  }
+}
