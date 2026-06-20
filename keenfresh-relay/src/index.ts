@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 
 // Serve the compiled mobile web application directly from the Relay on Port 3000
-const webDistPath = path.join(__dirname, '../../flaro-web/dist');
+const webDistPath = path.join(__dirname, '../../keenfresh-web/dist');
 app.use(express.static(webDistPath));
 
 const server = http.createServer(app);
