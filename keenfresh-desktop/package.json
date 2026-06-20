@@ -18,6 +18,7 @@
     "asar": false,
     "appId": "com.keenfresh.remote",
     "productName": "KeenFresh",
+    "electronDist": "node_modules/electron/dist",
     "publish": {
       "provider": "github",
       "owner": "adhilansari",
