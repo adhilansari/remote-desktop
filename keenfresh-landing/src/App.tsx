@@ -1,4 +1,3 @@
-import React from 'react';
 import { Download, Monitor, Smartphone, ShieldCheck, Clock, Zap, Server, Globe } from 'lucide-react';
 
 function App() {
