@@ -4,13 +4,25 @@
   "description": "Desktop host for KeenFresh remote control",
   "main": "dist/main.js",
   "scripts": {
-    "start": "echo Starting keenfresh-desktop v1.8.4 && tsc && copy src\\index.html dist\\index.html && electron .",
-    "build": "echo Building keenfresh-desktop v1.8.4 && tsc && copy src\\index.html dist\\index.html",
-    "pack": "npm run build && electron-builder --win portable"
+    "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist', {recursive:true, force:true}); fs.rmSync('release', {recursive:true, force:true});\"",
+    "copy-assets": "node -e \"require('fs').copyFileSync('src/index.html', 'dist/index.html')\"",
+    "build:tsc": "tsc",
+    "build": "npm run clean && npm run build:tsc && npm run copy-assets",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win portable",
+    "pack:mac": "npm run build && electron-builder --mac",
+    "release:win": "npm run build && electron-builder --win portable -p always",
+    "release:mac": "npm run build && electron-builder --mac -p always"
   },
   "build": {
+    "asar": false,
     "appId": "com.keenfresh.remote",
     "productName": "KeenFresh",
+    "publish": {
+      "provider": "github",
+      "owner": "adhilansari",
+      "repo": "remote-desktop"
+    },
     "directories": {
       "output": "release"
     },
