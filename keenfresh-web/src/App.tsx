@@ -1250,17 +1250,16 @@ function App() {
           )}
 
           {/* Keyboard Overlay */}
-          {/* Keyboard Overlay */}
           {showKeyboard && (
             <div className="keyboard-overlay" style={{ flexDirection: 'column', gap: '8px', padding: '10px' }}>
-              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'c'] })}>Copy</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'v'] })}>Paste</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'z'] })}>Undo</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'a'] })}>Select All</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 's'] })}>Save</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'f'] })}>Find</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', background: 'rgba(239, 68, 68, 0.4)' }} onClick={() => setShowKeyboard(false)}>Close</button>
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px', scrollbarWidth: 'none', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'c'] })}>Copy</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'v'] })}>Paste</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'z'] })}>Undo</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'a'] })}>Select All</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 's'] })}>Save</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'f'] })}>Find</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0, background: 'rgba(239, 68, 68, 0.4)' }} onClick={() => setShowKeyboard(false)}>Close</button>
               </div>
               <div style={{ display: 'flex', width: '100%', gap: '10px' }}>
                 <input 
