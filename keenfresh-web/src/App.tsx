@@ -17,11 +17,35 @@ function PairingScreen({ onPaired }: { onPaired: (pin: string) => void }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#f8fafc', padding: '20px', textAlign: 'center' }}>
-      <h2>Pair Device</h2>
-      <p style={{ color: '#94a3b8', marginBottom: '20px' }}>Enter the 6-digit PIN shown on your Flaro Desktop.</p>
-      <input type="text" value={code} onChange={e => setCode(e.target.value)} placeholder="000000" style={{ fontSize: '32px', padding: '10px', textAlign: 'center', letterSpacing: '8px', borderRadius: '12px', border: '1px solid #38bdf8', background: 'transparent', color: '#fff', width: '200px', marginBottom: '20px' }} maxLength={6} />
-      <button onClick={handlePair} style={{ padding: '15px 30px', fontSize: '18px', background: '#38bdf8', color: '#000', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Connect to Relay</button>
+    <div className="gradient-bg">
+      <div className="glass-panel" style={{ padding: '50px 40px', width: '90%', maxWidth: '420px', textAlign: 'center' }}>
+        <div style={{ marginBottom: '30px' }}>
+          <h1 className="text-gradient" style={{ fontSize: '42px', marginBottom: '10px' }}>KeenFresh</h1>
+          <h2 style={{ fontSize: '20px', color: 'var(--text-main)', opacity: 0.9 }}>Remote Desktop</h2>
+        </div>
+        
+        <p style={{ color: 'var(--text-muted)', marginBottom: '30px', fontSize: '15px', lineHeight: '1.5' }}>
+          Enter the 6-digit PIN shown on your Flaro Desktop to connect securely.
+        </p>
+        
+        <input 
+          type="text" 
+          value={code} 
+          onChange={e => setCode(e.target.value)} 
+          placeholder="000000" 
+          className="glass-input"
+          style={{ fontSize: '40px', padding: '15px', textAlign: 'center', letterSpacing: '12px', marginBottom: '30px' }} 
+          maxLength={6} 
+        />
+        
+        <button 
+          onClick={handlePair} 
+          className="btn-primary"
+          style={{ width: '100%', padding: '16px', fontSize: '18px' }}
+        >
+          Connect to Relay
+        </button>
+      </div>
     </div>
   );
 }
@@ -622,15 +646,15 @@ function App() {
   };
 
   const pwaInstallModal = showInstallPrompt && (
-    <div className="pwa-install-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
-      <div className="glass-menu" style={{ width: '85%', maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
-        <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>Install KeenFresh</h2>
-        <p style={{ opacity: 0.8, marginBottom: '25px', lineHeight: 1.5 }}>
+    <div className="pwa-install-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
+      <div className="glass-panel" style={{ width: '85%', maxWidth: '400px', textAlign: 'center', padding: '30px', animation: 'fadeIn 0.3s ease' }}>
+        <h2 className="text-gradient" style={{ margin: '0 0 10px 0', fontSize: '28px' }}>Install KeenFresh</h2>
+        <p style={{ opacity: 0.8, marginBottom: '25px', lineHeight: 1.5, fontSize: '15px' }}>
           Install KeenFresh to your home screen for a seamless, fullscreen native app experience!
         </p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => setShowInstallPrompt(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Not Now</button>
-          <button onClick={handleInstallClick} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: '#38bdf8', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Install App</button>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={() => setShowInstallPrompt(false)} className="btn-secondary" style={{ flex: 1, padding: '12px' }}>Not Now</button>
+          <button onClick={handleInstallClick} className="btn-primary" style={{ flex: 1, padding: '12px' }}>Install App</button>
         </div>
       </div>
     </div>
