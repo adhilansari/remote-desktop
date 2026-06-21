@@ -56,10 +56,28 @@ function App() {
   const [powerMenuPassword, setPowerMenuPassword] = useState('');
   const [showPowerUnlockInput, setShowPowerUnlockInput] = useState(false);
 
+  // PWA Install States
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
   // Ribbon state
   const ribbonRef = useRef<HTMLDivElement>(null);
   const [showRibbonLeft, setShowRibbonLeft] = useState(false);
   const [showRibbonRight, setShowRibbonRight] = useState(true);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -136,6 +154,13 @@ function App() {
               if (msg.type === 'clipboard-sync' && msg.data?.text) {
                 navigator.clipboard.writeText(msg.data.text).catch(err => console.error("Clipboard write failed", err));
                 alert("Desktop clipboard synced to mobile!");
+              } else if (msg.type === 'screenshot-data' && msg.data?.image) {
+                const link = document.createElement('a');
+                link.href = msg.data.image; // Base64 Data URL
+                link.download = `KeenFresh-${Date.now()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
               } else if (msg.type === 'desktop-sources') {
                 setDesktopSources(msg.data);
                 if (msg.data.length > 0) {
@@ -584,12 +609,46 @@ function App() {
     }
   };
 
+  const [zoomMode, setZoomMode] = useState<'contain' | 'cover'>('contain');
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
+  };
+
+  const pwaInstallModal = showInstallPrompt && (
+    <div className="pwa-install-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
+      <div className="glass-menu" style={{ width: '85%', maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
+        <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>Install KeenFresh</h2>
+        <p style={{ opacity: 0.8, marginBottom: '25px', lineHeight: 1.5 }}>
+          Install KeenFresh to your home screen for a seamless, fullscreen native app experience!
+        </p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => setShowInstallPrompt(false)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Not Now</button>
+          <button onClick={handleInstallClick} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: '#38bdf8', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Install App</button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!pin) {
-    return <PairingScreen onPaired={setPin} />;
+    return (
+      <>
+        <PairingScreen onPaired={setPin} />
+        {pwaInstallModal}
+      </>
+    );
   }
 
   return (
-    <div className="app-container">
+    <>
+      {pwaInstallModal}
+      <div className="app-container">
       <div className="video-container" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
         <video
           ref={videoRef}
@@ -598,7 +657,7 @@ function App() {
           playsInline
           muted={!audioEnabled}
           className="stream-video"
-          style={{ display: streamActive ? 'block' : 'none', objectFit: 'contain' }}
+          style={{ display: streamActive ? 'block' : 'none', objectFit: zoomMode }}
         />
       </div>
       
@@ -720,7 +779,8 @@ function App() {
                 sendInput('release-all-keys', {});
                 setActiveModifiers([]);
               }
-            }}>⌨</button>
+            }} title="Toggle Keyboard">⌨️</button>
+            
             <button className="icon-btn" onClick={() => {
               setShowPowerMenu(!showPowerMenu);
               setActiveQualityMenu(false);
@@ -728,10 +788,28 @@ function App() {
             }} title="Power Options">🔌</button>
 
             <button className="icon-btn" onClick={() => {
-              navigator.clipboard.readText().then(text => {
-                sendInput('clipboard-sync', { text });
-              }).catch(() => alert("Failed to read mobile clipboard."));
-            }}>📋</button>
+              if (navigator.clipboard) {
+                navigator.clipboard.readText().then(text => {
+                  sendInput('clipboard-sync', { text });
+                }).catch(() => alert("Failed to read mobile clipboard."));
+              }
+            }} title="Paste from phone clipboard">📋</button>
+            
+            <button className="icon-btn" onClick={() => setZoomMode(prev => prev === 'contain' ? 'cover' : 'contain')} title="Toggle Auto-Zoom">
+              {zoomMode === 'contain' ? '🔍' : '🔎'}
+            </button>
+            
+            <button className="icon-btn" onClick={() => {
+              sendInput('system-action', { action: 'screenshot' });
+            }} title="Take Screenshot">📸</button>
+            
+            <button className="icon-btn" onClick={() => {
+              if (confirm('Are you sure you want to disconnect?')) {
+                setPin(null);
+                localStorage.removeItem('keenfresh_pin');
+                socketRef.current?.disconnect();
+              }
+            }} title="Disconnect & Logout">🚪</button>
           </div>
 
           {/* Power Menu Modal */}
@@ -1017,6 +1095,7 @@ function App() {
         </>
       )}
     </div>
+    </>
   );
 }
 

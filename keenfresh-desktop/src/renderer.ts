@@ -234,6 +234,12 @@ ipcRenderer.on('cursor-sync', (event, data) => {
   }
 });
 
+ipcRenderer.on('webrtc-send', (event, msg) => {
+  if (dataChannel && dataChannel.readyState === 'open') {
+    dataChannel.send(JSON.stringify(msg));
+  }
+});
+
 let connectedClients = 0;
 
 function updateStatusUI() {

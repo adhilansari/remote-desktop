@@ -158,7 +158,21 @@ function connectToRelay() {
     else if (type === 'key-event') await handleKeyEvent(data);
     else if (type === 'shortcut') await handleShortcut(data);
     else if (type === 'type-text') await handleTypeText(data);
-    else if (type === 'system-action') await handleSystemAction(data);
+    else if (type === 'system-action') {
+      if (data.action === 'screenshot') {
+        try {
+          const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1920, height: 1080 } });
+          if (sources.length > 0) {
+            const dataUrl = sources[0].thumbnail.toDataURL({ scaleFactor: 1 });
+            hiddenWindow?.webContents.send('webrtc-send', { type: 'screenshot-data', data: { image: dataUrl } });
+          }
+        } catch (e) {
+          console.error('Screenshot failed', e);
+        }
+      } else {
+        await handleSystemAction(data);
+      }
+    }
     else if (type === 'unlock') await handleUnlock(data);
     else if (type === 'release-all-keys') await releaseAllModifiers();
     else if (type === 'clipboard-sync') {
