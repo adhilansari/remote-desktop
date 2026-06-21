@@ -115,7 +115,19 @@ function App() {
         </section>
 
         {/* Footer */}
-        <footer>
+        <footer style={{ marginTop: '4rem', padding: '2rem 0', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', fontSize: '0.9rem', color: '#94a3b8' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold', color: '#e2e8f0' }}>Created by Adhil Ansari</p>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem' }}>
+              <em>(I may not be highly active on social media, but feel free to drop a message!)</em>
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <a href="https://github.com/adhilansari" target="_blank" rel="noopener noreferrer" style={{ color: '#a5b4fc', textDecoration: 'none' }}>GitHub</a>
+              <a href="https://www.linkedin.com/in/adhil-ansari-pv/" target="_blank" rel="noopener noreferrer" style={{ color: '#a5b4fc', textDecoration: 'none' }}>LinkedIn</a>
+              <a href="https://www.instagram.com/adhil_ansari_pv/" target="_blank" rel="noopener noreferrer" style={{ color: '#a5b4fc', textDecoration: 'none' }}>Instagram</a>
+              <a href="https://adhilansari.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: '#a5b4fc', textDecoration: 'none' }}>Portfolio</a>
+            </div>
+          </div>
           <p>&copy; {new Date().getFullYear()} KeenFresh Remote Architecture. Built for the modern couch potato.</p>
         </footer>
 

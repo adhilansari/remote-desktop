@@ -163,6 +163,11 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
+  // Stats & File Transfer
+  const [showNetworkStats, setShowNetworkStats] = useState(false);
+  const [networkStats, setNetworkStats] = useState({ fps: 0, bitrate: 0, latency: 0 });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -171,11 +176,86 @@ function App() {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  // Network Stats Polling
+  useEffect(() => {
+    if (!showNetworkStats || !pcRef.current) return;
+    let lastBytes = 0;
+    let lastTime = Date.now();
+
+    const interval = setInterval(async () => {
+      if (!pcRef.current) return;
+      try {
+        const stats = await pcRef.current.getStats(null);
+        let fps = 0, bitrate = 0, latency = 0;
+        stats.forEach(report => {
+          if (report.type === 'inbound-rtp' && report.kind === 'video') {
+            fps = report.framesPerSecond || 0;
+            const bytes = report.bytesReceived;
+            const now = Date.now();
+            if (lastBytes > 0) {
+              const bits = (bytes - lastBytes) * 8;
+              bitrate = Math.round(bits / ((now - lastTime) / 1000) / 1000); // kbps
+            }
+            lastBytes = bytes;
+            lastTime = now;
+          }
+          if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+            latency = Math.round((report.currentRoundTripTime || 0) * 1000); // ms
+          }
+        });
+        setNetworkStats({ fps, bitrate, latency });
+      } catch (e) {
+        // ignore
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showNetworkStats]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert("File is too large! Maximum 15MB allowed.");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result as ArrayBuffer;
+      // Convert to base64
+      let binary = '';
+      const bytes = new Uint8Array(arrayBuffer);
+      const len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = window.btoa(binary);
+      
+      const chunkSize = 16000;
+      const totalChunks = Math.ceil(base64.length / chunkSize);
+      
+      sendInput('file-transfer-start', { name: file.name, size: file.size, totalChunks });
+      
+      // Send chunks slowly to avoid overflowing buffer
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= totalChunks) {
+          clearInterval(interval);
+          alert('File sent successfully!');
+          return;
+        }
+        const chunk = base64.substr(i * chunkSize, chunkSize);
+        sendInput('file-chunk', { index: i, total: totalChunks, chunk });
+        i++;
+      }, 5); // 5ms delay between chunks = ~3MB/s
+    };
+    reader.readAsArrayBuffer(file);
+  };
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -763,7 +843,6 @@ function App() {
     }
   };
 
-  // Removed duplicate zoomMode
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -801,6 +880,12 @@ function App() {
   return (
     <>
       {pwaInstallModal}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+        style={{ display: 'none' }} 
+      />
       <div className="app-container">
       <div className="video-container" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
         <video
@@ -860,6 +945,19 @@ function App() {
           >
             Got it, let's go!
           </button>
+        </div>
+      )}
+
+      {/* Network Stats HUD */}
+      {streamActive && showNetworkStats && (
+        <div style={{
+          position: 'absolute', top: '10px', left: '10px',
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+          padding: '10px', borderRadius: '8px', color: '#fff', fontSize: '12px', zIndex: 50, fontFamily: 'monospace'
+        }}>
+          <div>FPS: <span style={{color: '#38bdf8'}}>{networkStats.fps}</span></div>
+          <div>Bitrate: <span style={{color: '#38bdf8'}}>{networkStats.bitrate} kbps</span></div>
+          <div>Ping: <span style={{color: '#38bdf8'}}>{networkStats.latency} ms</span></div>
         </div>
       )}
 
@@ -1142,7 +1240,7 @@ function App() {
               </div>
 
               <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '1px' }}>Stream Quality</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '15px' }}>
                 {['1080p60', '720p30', '480p15'].map(q => (
                   <button 
                     key={q} 
@@ -1157,6 +1255,18 @@ function App() {
                     {q === '1080p60' ? 'High' : q === '720p30' ? 'Balanced' : 'Data Saver'}
                   </button>
                 ))}
+              </div>
+
+              <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '1px' }}>Advanced</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                <button 
+                  className={`glass-menu-item ${showNetworkStats ? 'active' : ''}`}
+                  onClick={() => setShowNetworkStats(!showNetworkStats)}
+                  style={{ padding: '10px 15px', fontSize: '14px', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <span>Show Network Stats</span>
+                  <span>{showNetworkStats ? 'ON' : 'OFF'}</span>
+                </button>
               </div>
             </div>
           )}

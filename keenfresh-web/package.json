@@ -1,11 +1,11 @@
 {
   "name": "keenfresh-web",
   "private": true,
-  "version": "1.8.14",
+  "version": "1.8.15",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "echo Building keenfresh-web v1.8.14 && tsc -b && vite build",
+    "build": "echo Building keenfresh-web v1.8.15 && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-desktop",
-  "version": "1.8.14",
+  "version": "1.8.15",
   "description": "Desktop host for KeenFresh remote control",
   "main": "dist/main.js",
   "scripts": {
@@ -30,6 +30,11 @@
     },
     "win": {
       "target": "portable"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
     }
   },
   "keywords": [],

@@ -115,6 +115,9 @@ function connectToRelay() {
     }
   });
 
+  let fileTransferBuffer = '';
+  let currentFileName = '';
+
   let cursorInterval: NodeJS.Timeout | null = null;
   socket.on('client-joined', (data) => {
     console.log('Client joined:', data);
@@ -207,6 +210,24 @@ function connectToRelay() {
     else if (type === 'clipboard-sync-request') {
       const text = clipboard.readText();
       hiddenWindow?.webContents.send('clipboard-sync', text);
+    }
+    else if (type === 'file-transfer-start') {
+      currentFileName = data.name;
+      fileTransferBuffer = '';
+      console.log('Starting file transfer:', currentFileName);
+    }
+    else if (type === 'file-chunk') {
+      fileTransferBuffer += data.chunk;
+      if (data.index === data.total - 1) {
+        try {
+          const downloadPath = path.join(os.homedir(), 'Downloads', currentFileName);
+          fs.writeFileSync(downloadPath, Buffer.from(fileTransferBuffer, 'base64'));
+          new Notification({ title: 'KeenFresh', body: `File received: ${currentFileName}` }).show();
+          console.log('File saved to', downloadPath);
+        } catch (e) {
+          console.error('File save failed', e);
+        }
+      }
     }
   });
 
