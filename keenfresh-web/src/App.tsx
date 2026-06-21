@@ -162,11 +162,6 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
-  // Ribbon state
-  const ribbonRef = useRef<HTMLDivElement>(null);
-  const [showRibbonLeft, setShowRibbonLeft] = useState(false);
-  const [showRibbonRight, setShowRibbonRight] = useState(true);
-
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -417,20 +412,6 @@ function App() {
     animationFrame = requestAnimationFrame(updateFocus);
     return () => cancelAnimationFrame(animationFrame);
   }, [scale]);
-
-  const handleRibbonScroll = () => {
-    if (ribbonRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = ribbonRef.current;
-      setShowRibbonLeft(scrollLeft > 5);
-      setShowRibbonRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 5);
-    }
-  };
-
-  useEffect(() => {
-    handleRibbonScroll();
-    window.addEventListener('resize', handleRibbonScroll);
-    return () => window.removeEventListener('resize', handleRibbonScroll);
-  }, [activeModifiers]);
 
   const sendInput = (type: string, data?: any) => {
     if (dcRef.current && dcRef.current.readyState === 'open') {
@@ -1073,9 +1054,12 @@ function App() {
                   <button 
                     className="glass-menu-item"
                     onClick={() => {
-                      if (confirm('Are you sure you want to disconnect?')) {
+                      if (window.confirm('Are you sure you want to disconnect?')) {
+                        if (socketRef.current) socketRef.current.disconnect();
+                        if (pcRef.current) pcRef.current.close();
                         setPin(null);
-                        socketRef.current?.disconnect();
+                        localStorage.removeItem('keenfresh_pin');
+                        setStreamActive(false);
                         setShowPowerMenu(false);
                       }
                     }}
@@ -1141,92 +1125,8 @@ function App() {
                   </button>
                 ))}
               </div>
-
-              <div style={{ fontSize: '12px', opacity: 0.7, margin: '15px 0 5px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Input Mode</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button 
-                  className={`glass-menu-item ${controlMode === 'trackpad' ? 'active' : ''}`}
-                  onClick={() => {
-                    setControlMode('trackpad');
-                    setActiveQualityMenu(false);
-                  }}
-                  style={{ padding: '10px 5px', fontSize: '13px', textAlign: 'center' }}
-                >Trackpad</button>
-                <button 
-                  className={`glass-menu-item ${controlMode === 'direct' ? 'active' : ''}`}
-                  onClick={() => {
-                    setControlMode('direct');
-                    setScale(1);
-                    setPan({x:0, y:0});
-                    setActiveQualityMenu(false);
-                  }}
-                  style={{ padding: '10px 5px', fontSize: '13px', textAlign: 'center' }}
-                >Direct Touch</button>
-              </div>
-
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '20px 0 10px 0' }} />
-              
-              <button 
-                onClick={() => {
-                  if (socketRef.current) socketRef.current.disconnect();
-                  if (pcRef.current) pcRef.current.close();
-                  setPin(null);
-                  localStorage.removeItem('keenfresh_pin');
-                  setStreamActive(false);
-                  setActiveQualityMenu(false);
-                }}
-                style={{
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.5)',
-                  color: '#f87171',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  fontWeight: 'bold',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span>🔓</span> Disconnect Session
-              </button>
             </div>
           )}
-
-          {/* Modifier Ribbon Wrapper */}
-          <div className="modifier-ribbon-wrapper">
-            {showRibbonLeft && (
-              <button className="icon-btn" style={{ width: '32px', height: '32px', fontSize: '14px', flexShrink: 0 }} onClick={() => ribbonRef.current?.scrollBy({ left: -150, behavior: 'smooth' })}>◀</button>
-            )}
-            <div className="modifier-ribbon" ref={ribbonRef} onScroll={handleRibbonScroll} style={{ position: 'static', transform: 'none', background: 'none', border: 'none', padding: '0', boxShadow: 'none' }}>
-              {['control', 'alt', 'shift', 'super', 'escape', 'delete'].map(key => (
-                <button 
-                  key={key}
-                  className={`mod-btn ${activeModifiers.includes(key) ? 'active' : ''}`}
-                  onClick={() => toggleModifier(key)}
-                >
-                  {key === 'control' ? 'Ctrl' : key === 'super' ? 'Win' : key === 'escape' ? 'Esc' : key === 'delete' ? 'Del' : key.charAt(0).toUpperCase() + key.slice(1)}
-                </button>
-              ))}
-              <button 
-                className="mod-btn"
-                style={{ background: 'rgba(239, 68, 68, 0.4)' }}
-                onClick={() => {
-                  sendInput('release-all-keys', {});
-                  setActiveModifiers([]);
-                }}
-              >
-                Clear
-              </button>
-            </div>
-            {showRibbonRight && (
-              <button className="icon-btn" style={{ width: '32px', height: '32px', fontSize: '14px', flexShrink: 0 }} onClick={() => ribbonRef.current?.scrollBy({ left: 150, behavior: 'smooth' })}>▶</button>
-            )}
-          </div>
 
           {/* Scroll Controls */}
           <div className="scroll-controls">
@@ -1253,13 +1153,24 @@ function App() {
           {showKeyboard && (
             <div className="keyboard-overlay" style={{ flexDirection: 'column', gap: '8px', padding: '10px' }}>
               <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px', scrollbarWidth: 'none', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+                {['control', 'alt', 'shift', 'super', 'escape', 'delete'].map(key => (
+                  <button 
+                    key={key}
+                    className={`mod-btn ${activeModifiers.includes(key) ? 'active' : ''}`}
+                    style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}
+                    onClick={() => toggleModifier(key)}
+                  >
+                    {key === 'control' ? 'Ctrl' : key === 'super' ? 'Win' : key === 'escape' ? 'Esc' : key === 'delete' ? 'Del' : key.charAt(0).toUpperCase() + key.slice(1)}
+                  </button>
+                ))}
+                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)', margin: '0 4px', flexShrink: 0 }}></div>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'c'] })}>Copy</button>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'v'] })}>Paste</button>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'z'] })}>Undo</button>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'a'] })}>Select All</button>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 's'] })}>Save</button>
                 <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0 }} onClick={() => sendInput('shortcut', { keys: ['control', 'f'] })}>Find</button>
-                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0, background: 'rgba(239, 68, 68, 0.4)' }} onClick={() => setShowKeyboard(false)}>Close</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', flexShrink: 0, background: 'rgba(239, 68, 68, 0.4)' }} onClick={() => { sendInput('release-all-keys', {}); setActiveModifiers([]); setShowKeyboard(false); }}>Close</button>
               </div>
               <div style={{ display: 'flex', width: '100%', gap: '10px' }}>
                 <input 
