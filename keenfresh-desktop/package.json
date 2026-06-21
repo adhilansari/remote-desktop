@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-desktop",
-  "version": "1.8.12",
+  "version": "1.8.13",
   "description": "Desktop host for KeenFresh remote control",
   "main": "dist/main.js",
   "scripts": {
@@ -22,7 +22,8 @@
     "publish": {
       "provider": "github",
       "owner": "adhilansari",
-      "repo": "remote-desktop"
+      "repo": "remote-desktop",
+      "releaseType": "release"
     },
     "directories": {
       "output": "release"
