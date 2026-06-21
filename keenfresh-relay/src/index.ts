@@ -46,7 +46,7 @@ io.on('connection', (socket: Socket) => {
       const clientIds = clientsInRoom ? Array.from(clientsInRoom) : [];
 
       socket.emit('room-joined', { room, role, otherClientIds: clientIds.filter(id => id !== socket.id) });
-      socket.to(room).emit('client-joined', { clientId: socket.id, clientType: role });
+      socket.to(room).emit('client-joined', { clientId: socket.id, clientType: role, hostname: validatedData.hostname });
 
       // Delegate the rest of the events
       handleSocketEvents(socket, room);

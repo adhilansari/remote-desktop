@@ -75,6 +75,7 @@ export interface SettingsSyncPayload {
 export interface RoomPayload {
   pin?: string;
   clientType: 'desktop' | 'mobile';
+  hostname?: string;
 }
 
 export interface SignalPayload {
@@ -85,7 +86,7 @@ export interface SignalPayload {
 export interface ServerToClientEvents {
   'room-joined': (data: { room: string, role: string, otherClientIds: string[] }) => void;
   'room-error': (data: { message: string }) => void;
-  'client-joined': (data: { clientId: string, clientType: string }) => void;
+  'client-joined': (data: { clientId: string, clientType: string, hostname?: string }) => void;
   'client-left': (data: { clientId: string }) => void;
   
   // WebRTC Signaling

@@ -1,12 +1,14 @@
 import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { io, Socket } from 'socket.io-client';
 import { handleMouseMove, handleMouseClick, handleMouseScroll, handleKeyEvent, handleAbsoluteMove, handleDoubleClick, handleMouseDown, handleMouseUp, handleShortcut, releaseAllModifiers, handleTypeText, handleSystemAction, handleUnlock } from './automation';
 import { ClientToServerEvents, ServerToClientEvents } from 'keenfresh-shared';
 import { screen, mouse } from '@nut-tree-fork/nut-js';
 import { exec } from 'child_process';
 
-let globalPin = Math.floor(100000 + Math.random() * 900000).toString();
+let globalPin = '';
 
 let hiddenWindow: BrowserWindow | null = null;
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
@@ -48,6 +50,18 @@ function createHiddenWindow() {
 }
 
 app.whenReady().then(() => {
+  const pinPath = path.join(app.getPath('userData'), 'keenfresh_pin.txt');
+  try {
+    if (fs.existsSync(pinPath)) {
+      globalPin = fs.readFileSync(pinPath, 'utf8').trim();
+    } else {
+      globalPin = Math.floor(100000 + Math.random() * 900000).toString();
+      fs.writeFileSync(pinPath, globalPin, 'utf8');
+    }
+  } catch (err) {
+    globalPin = Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
   createHiddenWindow();
   
   hiddenWindow?.webContents.on('did-finish-load', () => {
@@ -86,7 +100,11 @@ function connectToRelay() {
   
   socket.on('connect', () => {
     console.log('Connected to local signaling server');
-    socket?.emit('join-room', { pin: globalPin, clientType: 'desktop' }); 
+    socket?.emit('join-room', { 
+      pin: globalPin, 
+      clientType: 'desktop',
+      hostname: os.hostname()
+    }); 
   });
 
   socket.on('room-joined', (data) => {

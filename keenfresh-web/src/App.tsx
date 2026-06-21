@@ -6,45 +6,119 @@ type ControlMode = 'trackpad' | 'direct';
 
 
 
-function PairingScreen({ onPaired }: { onPaired: (pin: string) => void }) {
-  const [code, setCode] = useState('');
+interface SavedDevice {
+  pin: string;
+  hostname: string;
+}
+
+function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
+  const [savedDevices, setSavedDevices] = useState<SavedDevice[]>([]);
+  const [newPin, setNewPin] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  useEffect(() => {
+    const devices = JSON.parse(localStorage.getItem('keenfresh_devices') || '[]');
+    setSavedDevices(devices);
+  }, []);
 
   const handlePair = () => {
-    if (code.length === 6) {
-      localStorage.setItem('keenfresh_pin', code);
-      onPaired(code);
+    if (newPin.length === 6) {
+      // We don't know the hostname yet, it will be updated when connected
+      const newDevice = { pin: newPin, hostname: 'Unknown Desktop' };
+      const updated = [...savedDevices.filter(d => d.pin !== newPin), newDevice];
+      localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
+      localStorage.setItem('keenfresh_pin', newPin);
+      onConnect(newPin);
     }
   };
 
+  const removeDevice = (pinToRemove: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = savedDevices.filter(d => d.pin !== pinToRemove);
+    setSavedDevices(updated);
+    localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
+  };
+
   return (
-    <div className="gradient-bg">
-      <div className="glass-panel" style={{ padding: '50px 40px', width: '90%', maxWidth: '420px', textAlign: 'center' }}>
-        <div style={{ marginBottom: '30px' }}>
-          <h1 className="text-gradient" style={{ fontSize: '42px', marginBottom: '10px' }}>KeenFresh</h1>
-          <h2 style={{ fontSize: '20px', color: 'var(--text-main)', opacity: 0.9 }}>Remote Desktop</h2>
+    <div className="gradient-bg" style={{ overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '600px' }}>
+        <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+          <h1 className="text-gradient" style={{ fontSize: '36px', marginBottom: '8px' }}>KeenFresh</h1>
+          <h2 style={{ fontSize: '18px', color: 'var(--text-main)', opacity: 0.8, fontWeight: 500 }}>Remote Desktop</h2>
         </div>
         
-        <p style={{ color: 'var(--text-muted)', marginBottom: '30px', fontSize: '15px', lineHeight: '1.5' }}>
-          Enter the 6-digit PIN shown on your Flaro Desktop to connect securely.
-        </p>
-        
-        <input 
-          type="text" 
-          value={code} 
-          onChange={e => setCode(e.target.value)} 
-          placeholder="000000" 
-          className="glass-input"
-          style={{ fontSize: '40px', padding: '15px', textAlign: 'center', letterSpacing: '12px', marginBottom: '30px' }} 
-          maxLength={6} 
-        />
-        
-        <button 
-          onClick={handlePair} 
-          className="btn-primary"
-          style={{ width: '100%', padding: '16px', fontSize: '18px' }}
-        >
-          Connect to Relay
-        </button>
+        {savedDevices.length > 0 && (
+          <div style={{ marginBottom: '40px' }}>
+            <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>Remote devices</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {savedDevices.map(device => (
+                <div 
+                  key={device.pin} 
+                  className="glass-panel" 
+                  style={{ display: 'flex', alignItems: 'center', padding: '20px', cursor: 'pointer', borderRadius: '16px' }}
+                  onClick={() => {
+                    localStorage.setItem('keenfresh_pin', device.pin);
+                    onConnect(device.pin);
+                  }}
+                >
+                  <div style={{ background: 'var(--primary-blue)', borderRadius: '12px', padding: '12px', marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '24px' }}>🖥️</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>{device.hostname}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Tap to connect</div>
+                  </div>
+                  <button 
+                    onClick={(e) => removeDevice(device.pin, e)}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer', padding: '8px' }}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>Set up another device for remote access</h3>
+          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+            <ol style={{ paddingLeft: '20px', color: 'var(--text-muted)', lineHeight: '1.8', margin: '0 0 24px 0', fontSize: '15px' }}>
+              <li style={{ marginBottom: '12px' }}>Go to the computer you want to remotely access (Windows 10+).</li>
+              <li style={{ marginBottom: '12px' }}>Download and run the <b>KeenFresh Desktop Host</b>.</li>
+              <li style={{ marginBottom: '12px' }}>Look for the 6-digit pairing PIN on the desktop screen.</li>
+            </ol>
+            
+            {!showAddForm ? (
+              <button 
+                onClick={() => setShowAddForm(true)} 
+                className="btn-primary"
+                style={{ width: '100%', padding: '14px', fontSize: '16px', borderRadius: '12px' }}
+              >
+                Enter Access PIN
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: '12px', animation: 'fadeIn 0.3s ease' }}>
+                <input 
+                  type="text" 
+                  value={newPin} 
+                  onChange={e => setNewPin(e.target.value)} 
+                  placeholder="000000" 
+                  className="glass-input"
+                  style={{ flex: 1, fontSize: '20px', padding: '12px', textAlign: 'center', letterSpacing: '8px' }} 
+                  maxLength={6} 
+                />
+                <button 
+                  onClick={handlePair} 
+                  className="btn-primary"
+                  style={{ padding: '0 24px', fontSize: '16px', borderRadius: '12px' }}
+                >
+                  Connect
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -142,6 +216,14 @@ function App() {
     socket.on('connect', () => {
       setConnected(true);
       socket.emit('join-room', { pin, clientType: 'mobile' });
+    });
+
+    socket.on('client-joined', (data: any) => {
+      if (data.clientType === 'desktop' && data.hostname) {
+        const devices = JSON.parse(localStorage.getItem('keenfresh_devices') || '[]');
+        const updated = devices.map((d: any) => d.pin === pin ? { ...d, hostname: data.hostname } : d);
+        localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
+      }
     });
 
     socket.on('disconnect', () => {
@@ -660,10 +742,10 @@ function App() {
     </div>
   );
 
-  if (!pin) {
+  if (!pin || (!connected && !streamActive)) {
     return (
       <>
-        <PairingScreen onPaired={setPin} />
+        <Dashboard onConnect={setPin} />
         {pwaInstallModal}
       </>
     );
@@ -686,8 +768,25 @@ function App() {
       </div>
       
       {!streamActive && (
-        <div className="status-overlay">
-          {connected ? 'Waiting for Desktop Stream...' : 'Connecting...'}
+        <div className="gradient-bg" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', position: 'absolute', zIndex: 50 }}>
+          <div className="glass-panel" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'pulse 2s infinite' }}>
+            <div style={{ background: '#E65100', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '40px', color: 'white' }}>🖥️</span>
+            </div>
+            <h2 style={{ color: 'white', marginBottom: '8px' }}>Connecting...</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Establishing secure P2P connection</p>
+            <button 
+              className="btn-secondary" 
+              style={{ marginTop: '24px' }}
+              onClick={() => {
+                setPin(null);
+                setConnected(false);
+                socketRef.current?.disconnect();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -700,152 +799,65 @@ function App() {
         onTouchCancel={handleTouchEnd}
       />
 
-      {/* UI Toggle Button */}
-      <button 
-        className="ui-toggle-btn"
-        onClick={() => setShowUI(!showUI)}
-      >
-        {showUI ? '👁️' : '🫣'}
-      </button>
-
-      {showUI && (
-        <>
-          {/* Floating Dock (Combines top-bar and side-controls) */}
-          <div className="floating-dock">
-            {/* Audio Toggle */}
-            <button 
-              className={`icon-btn ${audioEnabled ? 'active-icon' : ''}`}
-              onClick={() => {
-                setAudioEnabled(!audioEnabled);
-                setHasInteracted(true);
-              }}
-            >{audioEnabled ? '🔊' : '🔇'}</button>
-
-            {/* Smart Zoom / Auto-Focus Toggle */}
-            <button 
-              className={`icon-btn ${autoFocus ? 'active-icon' : ''}`}
-              onClick={() => {
-                if (autoFocus && scale > 1) {
-                  // Zoom out
-                  setScale(1);
-                  setPan({ x: 0, y: 0 });
-                  setAutoFocus(false);
-                } else {
-                  // Zoom in to cursor
-                  const video = videoRef.current;
-                  if (video) {
-                    const screenW = window.innerWidth;
-                    const screenH = window.innerHeight;
-                    const videoRatio = video.videoWidth / video.videoHeight || 16/9;
-                    const elementRatio = screenW / screenH;
-                    let displayedWidth = screenW; let displayedHeight = screenH;
-                    let offsetX = 0; let offsetY = 0;
-                    if (videoRatio > elementRatio) {
-                      displayedHeight = screenW / videoRatio;
-                      offsetY = (screenH - displayedHeight) / 2;
-                    } else {
-                      displayedWidth = screenH * videoRatio;
-                      offsetX = (screenW - displayedWidth) / 2;
-                    }
-                    const cursorX = offsetX + displayedWidth * cursorPctRef.current.x;
-                    const cursorY = offsetY + displayedHeight * cursorPctRef.current.y;
-                    const cx = screenW / 2;
-                    const cy = screenH / 2;
-                    setScale(2.5);
-                    setPan({ x: -(cursorX - cx), y: -(cursorY - cy) });
-                    setAutoFocus(true);
-                  }
-                }
-              }}
-            >{autoFocus ? '🔍' : '🔎'}</button>
-
-            {/* Fullscreen Toggle */}
-            <button 
-              className="icon-btn"
-              onClick={toggleFullscreen}
-            >⤢</button>
-            
-            {/* Fit Mode Toggle */}
-            <button 
-              className={`icon-btn ${autoFillEnabled ? 'active-icon' : ''}`}
-              onClick={() => {
-                const newState = !autoFillEnabled;
-                setAutoFillEnabled(newState);
-                if (newState) {
-                  applyAutoFill();
-                } else {
-                  setScale(1);
-                  setPan({x:0, y:0});
-                }
-              }}
-            >{autoFillEnabled ? '🔲' : '🔳'}</button>
-            
-            {/* Displays Menu Toggle */}
-            <button className="icon-btn" onClick={() => { setShowDesktopSwitcher(true); setActiveQualityMenu(false); }}>🖥️</button>
-
-            {/* Quality Menu Toggle */}
-            <button className="icon-btn" onClick={() => { setActiveQualityMenu(!activeQualityMenu); }}>⚙️</button>
-
-            {/* Start Menu Button */}
-            <button className="icon-btn" onClick={() => {
-              sendInput('shortcut', { keys: ['super'] });
-            }} title="Start Menu">⊞</button>
-            
-            {/* Task View (Win+Tab) Button */}
-            <button className="icon-btn" onClick={() => {
-              sendInput('shortcut', { keys: ['super', 'tab'] });
-            }} title="Task View">🗂️</button>
-
-            <button className="icon-btn" onClick={() => {
-              setShowKeyboard(!showKeyboard);
-              if (showKeyboard) {
-                // If we are hiding it, release keys just in case
-                sendInput('release-all-keys', {});
-                setActiveModifiers([]);
-              }
-            }} title="Toggle Keyboard">⌨️</button>
-            
-            <button className="icon-btn" onClick={() => {
+      {/* Top Toolbar */}
+      <div className={`top-toolbar-container ${showUI ? '' : 'hidden'}`}>
+        <div className="top-toolbar">
+          {/* Menu Toggle (More Options) */}
+          <button 
+            className="icon-btn"
+            onClick={() => {
               setShowPowerMenu(!showPowerMenu);
               setActiveQualityMenu(false);
               setShowDesktopSwitcher(false);
-            }} title="Power Options">🔌</button>
+            }}
+            title="Menu"
+          >
+            ⋮
+          </button>
 
-            <button className="icon-btn" onClick={() => {
-              if (navigator.clipboard) {
-                navigator.clipboard.readText().then(text => {
-                  sendInput('clipboard-sync', { text });
-                }).catch(() => alert("Failed to read mobile clipboard."));
-              }
-            }} title="Paste from phone clipboard">📋</button>
-            
-            <button className="icon-btn" onClick={() => setZoomMode(prev => prev === 'contain' ? 'cover' : 'contain')} title="Toggle Auto-Zoom">
-              {zoomMode === 'contain' ? '🔍' : '🔎'}
-            </button>
-            
-            <button className="icon-btn" onClick={() => {
-              sendInput('system-action', { action: 'screenshot' });
-            }} title="Take Screenshot">📸</button>
-            
-            <button className="icon-btn" onClick={() => {
-              if (confirm('Are you sure you want to disconnect?')) {
-                setPin(null);
-                localStorage.removeItem('keenfresh_pin');
-                socketRef.current?.disconnect();
-              }
-            }} title="Disconnect & Logout">🚪</button>
-          </div>
+          {/* Trackpad / Touch Mode Toggle */}
+          <button 
+            className={`icon-btn ${controlMode === 'trackpad' ? 'active-icon' : ''}`}
+            onClick={() => setControlMode(prev => prev === 'trackpad' ? 'direct' : 'trackpad')}
+            title="Toggle Control Mode"
+          >
+            {controlMode === 'trackpad' ? '🖱️' : '👆'}
+          </button>
 
-          {/* Power Menu Modal */}
-          {showPowerMenu && (
-            <div className="glass-menu">
+          {/* Keyboard Toggle */}
+          <button className="icon-btn" onClick={() => {
+            setShowKeyboard(!showKeyboard);
+            if (showKeyboard) {
+              sendInput('release-all-keys', {});
+              setActiveModifiers([]);
+            }
+          }} title="Toggle Keyboard">⌨️</button>
+
+          {/* Fullscreen Toggle */}
+          <button 
+            className="icon-btn"
+            onClick={toggleFullscreen}
+          >⤢</button>
+        </div>
+        
+        {/* Handle to pull down / push up */}
+        <div className="toolbar-handle" onClick={() => setShowUI(!showUI)}>
+        </div>
+      </div>
+
+      {/* More Options Menu Modal */}
+      {showPowerMenu && (
+        <div className="glass-menu">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Power Options</h3>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>More Options</h3>
                 <button className="icon-btn" style={{ width: '30px', height: '30px', fontSize: '14px' }} onClick={() => { setShowPowerMenu(false); setShowPowerUnlockInput(false); }}>✕</button>
               </div>
 
               {!showPowerUnlockInput ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* System & Power */}
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Power & System</div>
+                  
                   <button 
                     className="glass-menu-item"
                     onClick={() => {
@@ -870,10 +882,127 @@ function App() {
                   </button>
                   <button 
                     className="glass-menu-item"
-                    onClick={() => setShowPowerUnlockInput(true)}
+                    onClick={() => {
+                      setShowPowerUnlockInput(true);
+                    }}
                     style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
                   >
-                    <span>🔑</span> Unlock PC (Type Password)
+                    <span>🔓</span> Unlock PC
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      sendInput('shortcut', { keys: ['super'] });
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>⊞</span> Start Menu
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      sendInput('shortcut', { keys: ['super', 'tab'] });
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>🗂️</span> Task View
+                  </button>
+
+                  {/* Tools */}
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Tools & Displays</div>
+
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => { setShowDesktopSwitcher(true); setShowPowerMenu(false); }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>🖥️</span> Switch Displays
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => { setActiveQualityMenu(true); setShowPowerMenu(false); }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>⚙️</span> Stream Quality
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      setAudioEnabled(!audioEnabled);
+                      setHasInteracted(true);
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>{audioEnabled ? '🔊' : '🔇'}</span> {audioEnabled ? 'Mute Audio' : 'Enable Audio'}
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      const newState = !autoFillEnabled;
+                      setAutoFillEnabled(newState);
+                      if (newState) {
+                        applyAutoFill();
+                      } else {
+                        setScale(1);
+                        setPan({x:0, y:0});
+                      }
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>{autoFillEnabled ? '🔲' : '🔳'}</span> {autoFillEnabled ? 'Disable Fit Mode' : 'Enable Fit Mode'}
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      setZoomMode(prev => prev === 'contain' ? 'cover' : 'contain');
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>{zoomMode === 'contain' ? '🔍' : '🔎'}</span> Toggle Auto-Zoom
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      sendInput('system-action', { action: 'screenshot' });
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>📸</span> Take Screenshot
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      if (navigator.clipboard) {
+                        navigator.clipboard.readText().then(text => {
+                          sendInput('clipboard-sync', { text });
+                        }).catch(() => alert("Failed to read mobile clipboard."));
+                      }
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>📋</span> Paste from phone
+                  </button>
+
+                  <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', margin: '10px 0' }}></div>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to disconnect?')) {
+                        setPin(null);
+                        socketRef.current?.disconnect();
+                        setShowPowerMenu(false);
+                      }
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', color: '#ff4444' }}
+                  >
+                    <span>🚪</span> Disconnect
                   </button>
                 </div>
               ) : (
@@ -1116,8 +1245,6 @@ function App() {
               </div>
             </div>
           )}
-        </>
-      )}
     </div>
     </>
   );

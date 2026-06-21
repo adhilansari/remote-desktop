@@ -1,11 +1,11 @@
 {
   "name": "keenfresh-relay",
-  "version": "1.8.9",
+  "version": "1.8.10",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "echo Building keenfresh-relay v1.8.9 && tsc",
+    "build": "echo Building keenfresh-relay v1.8.10 && tsc",
     "dev": "nodemon src/index.ts"
   },
   "keywords": [],
