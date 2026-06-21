@@ -51,6 +51,11 @@ function App() {
   const [currentQuality, setCurrentQuality] = useState('1080p60');
   const [currentSourceId, setCurrentSourceId] = useState<string | null>(null);
 
+  // Power Menu States
+  const [showPowerMenu, setShowPowerMenu] = useState(false);
+  const [powerMenuPassword, setPowerMenuPassword] = useState('');
+  const [showPowerUnlockInput, setShowPowerUnlockInput] = useState(false);
+
   // Ribbon state
   const ribbonRef = useRef<HTMLDivElement>(null);
   const [showRibbonLeft, setShowRibbonLeft] = useState(false);
@@ -717,11 +722,89 @@ function App() {
               }
             }}>⌨</button>
             <button className="icon-btn" onClick={() => {
+              setShowPowerMenu(!showPowerMenu);
+              setActiveQualityMenu(false);
+              setShowDesktopSwitcher(false);
+            }} title="Power Options">🔌</button>
+
+            <button className="icon-btn" onClick={() => {
               navigator.clipboard.readText().then(text => {
                 sendInput('clipboard-sync', { text });
               }).catch(() => alert("Failed to read mobile clipboard."));
             }}>📋</button>
           </div>
+
+          {/* Power Menu Modal */}
+          {showPowerMenu && (
+            <div className="glass-menu">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Power Options</h3>
+                <button className="icon-btn" style={{ width: '30px', height: '30px', fontSize: '14px' }} onClick={() => { setShowPowerMenu(false); setShowPowerUnlockInput(false); }}>✕</button>
+              </div>
+
+              {!showPowerUnlockInput ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      sendInput('system-action', { type: 'lock' });
+                      setShowPowerMenu(false);
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>🔒</span> Lock PC
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to put the remote PC to sleep? You may not be able to wake it remotely unless Wake-on-LAN is configured.")) {
+                        sendInput('system-action', { type: 'sleep' });
+                        setShowPowerMenu(false);
+                      }
+                    }}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>🌙</span> Sleep PC
+                  </button>
+                  <button 
+                    className="glass-menu-item"
+                    onClick={() => setShowPowerUnlockInput(true)}
+                    style={{ padding: '12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                  >
+                    <span>🔑</span> Unlock PC (Type Password)
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontSize: '12px', opacity: 0.8, lineHeight: 1.4 }}>
+                    Enter your Windows Password or PIN to securely unlock the remote PC.
+                  </div>
+                  <input 
+                    type="password"
+                    value={powerMenuPassword}
+                    onChange={(e) => setPowerMenuPassword(e.target.value)}
+                    placeholder="Windows Password"
+                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid #38bdf8', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '16px' }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
+                    <button 
+                      onClick={() => setShowPowerUnlockInput(false)}
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', cursor: 'pointer' }}
+                    >Back</button>
+                    <button 
+                      onClick={() => {
+                        sendInput('unlock', { password: powerMenuPassword });
+                        setPowerMenuPassword('');
+                        setShowPowerUnlockInput(false);
+                        setShowPowerMenu(false);
+                      }}
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#38bdf8', color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+                    >Unlock</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quality & Settings Menu Modal */}
           {activeQualityMenu && (

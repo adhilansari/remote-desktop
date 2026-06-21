@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen } from 'electron';
 import path from 'path';
 import { io, Socket } from 'socket.io-client';
-import { handleMouseMove, handleMouseClick, handleMouseScroll, handleKeyEvent, handleAbsoluteMove, handleDoubleClick, handleMouseDown, handleMouseUp, handleShortcut, releaseAllModifiers, handleTypeText } from './automation';
+import { handleMouseMove, handleMouseClick, handleMouseScroll, handleKeyEvent, handleAbsoluteMove, handleDoubleClick, handleMouseDown, handleMouseUp, handleShortcut, releaseAllModifiers, handleTypeText, handleSystemAction, handleUnlock } from './automation';
 import { ClientToServerEvents, ServerToClientEvents } from 'keenfresh-shared';
 import { screen, mouse } from '@nut-tree-fork/nut-js';
 import { exec } from 'child_process';
@@ -158,6 +158,8 @@ function connectToRelay() {
     else if (type === 'key-event') await handleKeyEvent(data);
     else if (type === 'shortcut') await handleShortcut(data);
     else if (type === 'type-text') await handleTypeText(data);
+    else if (type === 'system-action') await handleSystemAction(data);
+    else if (type === 'unlock') await handleUnlock(data);
     else if (type === 'release-all-keys') await releaseAllModifiers();
     else if (type === 'clipboard-sync') {
       if (data && data.text) clipboard.writeText(data.text);

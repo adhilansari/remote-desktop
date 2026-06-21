@@ -1,6 +1,7 @@
 import { mouse, keyboard, screen, Point, Button, Key } from '@nut-tree-fork/nut-js';
 import { Socket } from 'socket.io-client';
 import { ClientToServerEvents, ServerToClientEvents } from 'keenfresh-shared';
+import { exec } from 'child_process';
 
   // Remove native artificial delay to ensure buttery smooth mouse movements
   mouse.config.autoDelayMs = 0;
@@ -151,11 +152,41 @@ export async function handleKeyEvent(data: any) {
 
 export async function handleTypeText(data: { text: string }) {
   try {
-    if (data.text) {
-      await keyboard.type(data.text);
-    }
+    await keyboard.type(data.text);
   } catch (e) {
     console.error('type-text error', e);
+  }
+}
+
+export async function handleSystemAction(data: { type: 'lock' | 'sleep' }) {
+  try {
+    if (data.type === 'lock') {
+      exec('rundll32.exe user32.dll,LockWorkStation');
+    } else if (data.type === 'sleep') {
+      exec('rundll32.exe powrprof.dll,SetSuspendState 0,1,0');
+    }
+  } catch (e) {
+    console.error('system-action error', e);
+  }
+}
+
+export async function handleUnlock(data: { password: string }) {
+  try {
+    // 1. Press Space to wake up the screen and dismiss the lock screen cover
+    await keyboard.pressKey(Key.Space);
+    await keyboard.releaseKey(Key.Space);
+    
+    // 2. Wait 1 second for the password field to appear and gain focus
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // 3. Type the password
+    await keyboard.type(data.password);
+    
+    // 4. Press Enter to submit
+    await keyboard.pressKey(Key.Enter);
+    await keyboard.releaseKey(Key.Enter);
+  } catch (e) {
+    console.error('unlock error', e);
   }
 }
 
