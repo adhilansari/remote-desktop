@@ -1,4 +1,4 @@
-import { Download, Monitor, Smartphone, ShieldCheck, Clock, Zap, Server, Globe } from 'lucide-react';
+import { Download, Monitor, Smartphone, ShieldCheck, Coffee, Ghost, Cpu, Server, Globe } from 'lucide-react';
 
 function App() {
   return (
@@ -21,10 +21,10 @@ function App() {
 
         {/* Hero Section */}
         <header className="hero">
-          <div className="hero-tag">✨ The Ultimate Remote Controller</div>
-          <h1>Unchain Yourself <br /><span>From Your Desk</span></h1>
+          <div className="hero-tag">✨ Stop Pretending to Work at Your Desk</div>
+          <h1>Unchain Yourself <br /><span>From the Keyboard</span></h1>
           <p>
-            Whether you are a developer compiling huge codebases, a professional rendering 4K video, or just someone who hates sitting hunched over a laptop—KeenFresh gives you complete control of your Windows PC from anywhere in the world using just your phone.
+            Whether you are waiting for an absurdly long video render, pretending to be active on Slack, or just running a code compilation that takes longer than a Lord of the Rings movie—KeenFresh puts your entire PC in your pocket so you can finally go make a sandwich.
           </p>
           <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary">
             <Download size={24} />
@@ -33,65 +33,65 @@ function App() {
         </header>
 
         {/* The Problem (Pain Points) */}
-        <h2 className="section-title">The Desktop Dilemma</h2>
+        <h2 className="section-title">The "I Can't Leave My Desk" Support Group</h2>
         <div className="grid">
           <div className="card">
             <div className="card-icon red">
-              <Clock size={24} />
+              <Cpu size={24} />
             </div>
-            <h3>Waiting on Tasks</h3>
-            <p>You start a massive software build, a database migration, or a video render. You are glued to your chair just waiting for it to finish so you can check for errors.</p>
+            <h3>The "Compiling" Excuse</h3>
+            <p>Your code is building. You want to lie on the couch, but what if it fails after 15 minutes and needs a single key press? KeenFresh lets you monitor the build from your sofa.</p>
           </div>
           <div className="card">
             <div className="card-icon red">
-              <Zap size={24} />
+              <Coffee size={24} />
             </div>
-            <h3>Interrupting Life</h3>
-            <p>You want to grab a coffee, make lunch, or lay on the couch, but you are terrified of missing a critical notification, email, or a sudden crash screen on your desktop.</p>
+            <h3>The Coffee Run Anxiety</h3>
+            <p>You step away to grab coffee, terrified that your boss just sent an urgent message. With KeenFresh, your desktop screen is right on your phone. Problem solved.</p>
           </div>
           <div className="card">
             <div className="card-icon red">
-              <Monitor size={24} />
+              <Ghost size={24} />
             </div>
-            <h3>Clunky Remote Apps</h3>
-            <p>Traditional remote desktop apps are slow, pixelated, require complicated port-forwarding, and drain your mobile battery. You just want a simple, beautiful controller.</p>
+            <h3>The Ghost Worker</h3>
+            <p>We won't tell anyone if you're using KeenFresh to jiggle your mouse from the bathroom so your Teams status stays "Available." We just build the tools.</p>
           </div>
         </div>
 
         {/* Highlight Solution */}
         <section className="highlight-section">
           <h2>Your PC, Now in Your Pocket.</h2>
-          <p>KeenFresh is a lightning-fast SaaS platform that securely pairs your Windows Desktop to your Smartphone browser. No apps to install on your phone. Just scan a QR code, and you have instant, low-latency control.</p>
+          <p>Traditional remote apps are clunky, require you to install bloatware on your phone, and need a PhD in port-forwarding to set up. KeenFresh is just a beautifully simple Windows app. Scan a QR code, and your phone's browser becomes a secure, low-latency magic wand.</p>
         </section>
 
         {/* Features */}
-        <h2 className="section-title">Why KeenFresh?</h2>
+        <h2 className="section-title">Why KeenFresh is Actually Good</h2>
         <div className="grid">
           <div className="card">
             <div className="card-icon blue">
               <Smartphone size={24} />
             </div>
-            <h3>Web-Based Mobile App</h3>
-            <p>Don't clutter your phone with more apps. Just go to <strong>app.keenfresh.com</strong>, scan the QR code on your desktop, and instantly turn your phone into a secure trackpad and keyboard.</p>
+            <h3>No Mobile App Required</h3>
+            <p>Don't clutter your phone. Just go to <strong>app.keenfresh.com</strong>, scan the QR code on your PC, and boom—you have a 60FPS stream and a full trackpad.</p>
           </div>
           <div className="card">
             <div className="card-icon green">
               <Globe size={24} />
             </div>
-            <h3>Global Cloud Relay</h3>
-            <p>Forget messy local Wi-Fi requirements or firewall nightmares. KeenFresh uses a globally distributed AWS & Cloudflare architecture to connect you from anywhere with an internet connection.</p>
+            <h3>Global Magic Relay</h3>
+            <p>No need to mess with your router. KeenFresh uses a globally distributed AWS & Cloudflare architecture to magically connect you from anywhere on Earth.</p>
           </div>
           <div className="card">
             <div className="card-icon blue">
               <ShieldCheck size={24} />
             </div>
-            <h3>Enterprise Security</h3>
-            <p>Your connection is secured via WebRTC and WSS (WebSocket Secure). End-to-end encrypted signaling means nobody can intercept your keystrokes or mouse movements.</p>
+            <h3>Fort Knox Security</h3>
+            <p>Your connection is secured via WebRTC. End-to-end encrypted signaling means not even we can see what you are doing. Your secrets are safe.</p>
           </div>
         </div>
 
         {/* Self Hosting Guide */}
-        <h2 className="section-title">For Developers</h2>
+        <h2 className="section-title">For the Nerds (We Love You)</h2>
         <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
           <div className="card" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
             <div className="card-icon" style={{ flexShrink: 0, width: '80px', height: '80px' }}>
@@ -99,15 +99,15 @@ function App() {
             </div>
             <div>
               <h3>Want to self-host the Relay Server?</h3>
-              <p>KeenFresh is open-source friendly. We provide a completely containerized <code>docker-compose.yml</code> so you can spin up your own secure signaling server on AWS EC2 or DigitalOcean in under 5 minutes. Check out our GitHub repository for the full Cloudflare and AWS deployment guide!</p>
+              <p>Don't trust our cloud? That's fair. KeenFresh is open-source friendly. We provide a <code>docker-compose.yml</code> so you can spin up your own secure signaling server on AWS EC2 or DigitalOcean in 5 minutes. Check out our GitHub!</p>
             </div>
           </div>
         </div>
 
         {/* CTA */}
         <section id="download" className="highlight-section" style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(5, 5, 10, 0.5))' }}>
-          <h2>Ready to Step Away?</h2>
-          <p>Download the lightweight Windows client today and experience true freedom.</p>
+          <h2>Ready to Touch Grass?</h2>
+          <p>Download the lightweight Windows client today and finally step away from your monitor.</p>
           <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
             <Download size={28} />
             Download KeenFresh Setup.exe
@@ -116,7 +116,7 @@ function App() {
 
         {/* Footer */}
         <footer>
-          <p>&copy; {new Date().getFullYear()} KeenFresh Remote Architecture. Built for the modern professional.</p>
+          <p>&copy; {new Date().getFullYear()} KeenFresh Remote Architecture. Built for the modern couch potato.</p>
         </footer>
 
       </div>

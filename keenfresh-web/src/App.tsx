@@ -133,6 +133,7 @@ function App() {
   const [showUI, setShowUI] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [keyboardText, setKeyboardText] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   
@@ -194,6 +195,7 @@ function App() {
   const isDragging = useRef(false);
   const maxTouches = useRef(0);
   const cursorPctRef = useRef({ x: 0.5, y: 0.5 });
+  const screenshotBufferRef = useRef('');
 
   useEffect(() => {
     if (!pin) return;
@@ -264,13 +266,18 @@ function App() {
               if (msg.type === 'clipboard-sync' && msg.data?.text) {
                 navigator.clipboard.writeText(msg.data.text).catch(err => console.error("Clipboard write failed", err));
                 alert("Desktop clipboard synced to mobile!");
-              } else if (msg.type === 'screenshot-data' && msg.data?.image) {
-                const link = document.createElement('a');
-                link.href = msg.data.image; // Base64 Data URL
-                link.download = `KeenFresh-${Date.now()}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+              } else if (msg.type === 'screenshot-chunk') {
+                if (msg.data.index === 0) screenshotBufferRef.current = '';
+                screenshotBufferRef.current += msg.data.chunk;
+                if (msg.data.index === msg.data.total - 1) {
+                  const link = document.createElement('a');
+                  link.href = 'data:image/jpeg;base64,' + screenshotBufferRef.current;
+                  link.download = `KeenFresh-${Date.now()}.jpg`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  screenshotBufferRef.current = '';
+                }
               } else if (msg.type === 'desktop-sources') {
                 setDesktopSources(msg.data);
                 if (msg.data.length > 0) {
@@ -827,6 +834,32 @@ function App() {
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Onboarding Overlay */}
+      {streamActive && showOnboarding && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)',
+          zIndex: 9000, display: 'flex', flexDirection: 'column', 
+          alignItems: 'center', justifyContent: 'center', color: '#fff', padding: '20px', textAlign: 'center'
+        }}>
+          <h2 style={{ fontSize: '24px', marginBottom: '10px', color: '#38bdf8' }}>Connection Established!</h2>
+          <p style={{ fontSize: '16px', lineHeight: '1.5', marginBottom: '30px', color: '#cbd5e1' }}>
+            Your desktop is now in your hands. <br/><br/>
+            👆 <b>Tap</b> to Click<br/>
+            ✌️ <b>Two-Finger Tap</b> to Right-Click<br/>
+            🙌 <b>Three-Finger Tap</b> for Menus<br/>
+            👌 <b>Pinch</b> to Zoom In/Out<br/>
+          </p>
+          <button 
+            className="btn-primary" 
+            onClick={() => setShowOnboarding(false)}
+            style={{ padding: '12px 24px', fontSize: '16px', borderRadius: '12px', background: '#38bdf8', color: '#000', fontWeight: 'bold' }}
+          >
+            Got it, let's go!
+          </button>
         </div>
       )}
 

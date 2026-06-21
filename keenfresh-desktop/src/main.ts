@@ -181,8 +181,16 @@ function connectToRelay() {
         try {
           const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1920, height: 1080 } });
           if (sources.length > 0) {
-            const dataUrl = sources[0].thumbnail.toDataURL({ scaleFactor: 1 });
-            hiddenWindow?.webContents.send('webrtc-send', { type: 'screenshot-data', data: { image: dataUrl } });
+            const base64 = sources[0].thumbnail.toJPEG(75).toString('base64');
+            const chunkSize = 16000; // Safe WebRTC limit
+            const totalChunks = Math.ceil(base64.length / chunkSize);
+            for (let i = 0; i < totalChunks; i++) {
+              const chunk = base64.substr(i * chunkSize, chunkSize);
+              hiddenWindow?.webContents.send('webrtc-send', { 
+                type: 'screenshot-chunk', 
+                data: { chunk, index: i, total: totalChunks } 
+              });
+            }
           }
         } catch (e) {
           console.error('Screenshot failed', e);
