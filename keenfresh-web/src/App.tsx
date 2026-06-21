@@ -1130,8 +1130,8 @@ function App() {
 
           {/* Scroll Controls */}
           <div className="scroll-controls">
-            <button className="icon-btn" style={{ fontSize: '20px', padding: '15px 20px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'up', amount: 15 }); }}>▲</button>
-            <button className="icon-btn" style={{ fontSize: '20px', padding: '15px 20px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'down', amount: 15 }); }}>▼</button>
+            <button className="icon-btn" style={{ fontSize: '18px', padding: '10px 14px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'up', amount: 15 }); }}>▲</button>
+            <button className="icon-btn" style={{ fontSize: '18px', padding: '10px 14px', background: 'transparent' }} onClick={(e) => { e.stopPropagation(); sendInput('mouse-scroll', { direction: 'down', amount: 15 }); }}>▼</button>
           </div>
 
           {/* Reset Zoom Button */}

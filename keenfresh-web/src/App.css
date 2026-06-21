@@ -405,17 +405,24 @@ body, html, #root {
 }
 
 .glass-menu-item {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
   color: #e2e8f0;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 14px 20px;
+  border-radius: 12px;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 15px;
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.glass-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .glass-menu-item:active {
@@ -468,20 +475,7 @@ body, html, #root {
 }
 .desktop-cards-container::-webkit-scrollbar { display: none; }
 
-.scroll-controls {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  z-index: 50;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 10px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-}
+
 
 .desktop-card {
   width: 160px;
@@ -510,20 +504,20 @@ body, html, #root {
 /* Scroll Controls */
 .scroll-controls {
   position: absolute;
-  left: 20px;
+  left: 15px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   z-index: 20;
-  background: rgba(20, 20, 20, 0.65);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  padding: 12px;
-  border-radius: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 /* Reset Zoom Button */
