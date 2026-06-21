@@ -145,6 +145,11 @@ function App() {
   const [activeQualityMenu, setActiveQualityMenu] = useState(false);
   const [autoFillEnabled, setAutoFillEnabled] = useState(true);
   const [showDesktopSwitcher, setShowDesktopSwitcher] = useState(false);
+  const [zoomMode, setZoomMode] = useState<'contain'|'cover'>('contain');
+
+  // Network & Reconnection States
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [ping, setPing] = useState<number | null>(null);
   const [currentQuality, setCurrentQuality] = useState('1080p60');
   const [currentSourceId, setCurrentSourceId] = useState<string | null>(null);
 
@@ -214,6 +219,7 @@ function App() {
 
     socket.on('connect', () => {
       setConnected(true);
+      setIsReconnecting(false);
       socket.emit('join-room', { pin, clientType: 'mobile' });
     });
 
@@ -225,9 +231,13 @@ function App() {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       setConnected(false);
-      setStreamActive(false);
+      if (reason === "io server disconnect" || reason === "io client disconnect") {
+        setStreamActive(false);
+      } else {
+        setIsReconnecting(true);
+      }
     });
 
     socket.on('webrtc-signal', async (data: any) => {
@@ -297,6 +307,29 @@ function App() {
       pcRef.current?.close();
     };
   }, [pin]);
+
+  // --- Network Health Polling ---
+  useEffect(() => {
+    let interval: any;
+    if (streamActive) {
+      interval = setInterval(async () => {
+        if (!pcRef.current) return;
+        try {
+          const stats = await pcRef.current.getStats();
+          let rtt = null;
+          stats.forEach(stat => {
+            if (stat.type === 'candidate-pair' && stat.state === 'succeeded') {
+              if (stat.currentRoundTripTime !== undefined) {
+                rtt = stat.currentRoundTripTime * 1000;
+              }
+            }
+          });
+          if (rtt !== null) setPing(Math.round(rtt));
+        } catch(e) {}
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [streamActive]);
 
   // --- Auto-Focus Engine (Edge Detection) ---
   useEffect(() => {
@@ -611,14 +644,34 @@ function App() {
       }
       lastPanCenter.current = currentCenter;
     } else if (e.touches.length === 3) {
-      // Three-Finger Pan or Swipe Down
+      // Three-Finger Pan or Swipe Down/Left/Right
       const currentCenter = getCenter(e.touches[0], e.touches[1]);
       const dx = currentCenter.x - lastPanCenter.current.x;
       const dy = currentCenter.y - lastPanCenter.current.y;
       
       const totalDy = currentCenter.y - touchStartPos.current.y;
-      if (totalDy > 50 && !showUI) {
+      const totalDx = currentCenter.x - touchStartPos.current.x;
+
+      if (totalDy > 50 && !showUI && Math.abs(totalDx) < 50) {
         setShowUI(true); // 3-finger swipe down to show UI
+      } else if (Math.abs(totalDx) > 80) {
+        // 3-finger horizontal swipe to switch monitors
+        if (desktopSources.length > 1 && !isDragging.current) {
+          isDragging.current = true; // debounce flag
+          const currentIndex = desktopSources.findIndex(s => s.id === currentSourceId);
+          let nextIndex = currentIndex;
+          if (totalDx > 0) { // Swipe right (prev monitor)
+            nextIndex = (currentIndex - 1 + desktopSources.length) % desktopSources.length;
+          } else { // Swipe left (next monitor)
+            nextIndex = (currentIndex + 1) % desktopSources.length;
+          }
+          const nextSource = desktopSources[nextIndex];
+          if (nextSource) {
+            setCurrentSourceId(nextSource.id);
+            sendInput('switch-display', { sourceId: nextSource.id });
+            if (navigator.vibrate) navigator.vibrate(50);
+          }
+        }
       } else if (scale > 1) {
         setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
       }
@@ -722,8 +775,7 @@ function App() {
     }
   };
 
-  const [zoomMode, setZoomMode] = useState<'contain' | 'cover'>('contain');
-
+  // Removed duplicate zoomMode
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -807,6 +859,18 @@ function App() {
       />
 
       {/* Top Toolbar */}
+      <div className={`status-overlay ${(!connected && streamActive && !isReconnecting) ? '' : 'hidden'}`}>
+        <div className="status-spinner"></div>
+        <div>Connecting to remote...</div>
+      </div>
+
+      {/* Reconnecting Overlay */}
+      <div className={`status-overlay ${isReconnecting ? '' : 'hidden'}`} style={{ zIndex: 100, background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)' }}>
+        <div className="status-spinner" style={{ borderColor: 'rgba(234, 179, 8, 0.2)', borderTopColor: '#eab308' }}></div>
+        <div style={{ color: '#eab308', fontWeight: 600 }}>Connection dropped. Reconnecting...</div>
+      </div>
+
+      {/* Top Toolbar */}
       <div className={`top-toolbar-container ${showUI ? '' : 'hidden'}`}>
         <div className="top-toolbar">
           {/* Menu Toggle (More Options) */}
@@ -821,6 +885,14 @@ function App() {
           >
             ⋮
           </button>
+
+          {/* Network Ping Indicator */}
+          {ping !== null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: '10px', color: '#fff', fontWeight: 600 }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ping < 80 ? '#22c55e' : ping < 150 ? '#eab308' : '#ef4444' }}></div>
+              {ping}ms
+            </div>
+          )}
 
           {/* Trackpad / Touch Mode Toggle */}
           <button 
@@ -1178,40 +1250,52 @@ function App() {
           )}
 
           {/* Keyboard Overlay */}
+          {/* Keyboard Overlay */}
           {showKeyboard && (
-            <div className="keyboard-overlay">
-              <input 
-                type="text" 
-                value={keyboardText}
-                onChange={(e) => setKeyboardText(e.target.value)}
-                placeholder="Type to send to desktop..."
-                className="keyboard-input"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+            <div className="keyboard-overlay" style={{ flexDirection: 'column', gap: '8px', padding: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: '100%', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'c'] })}>Copy</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'v'] })}>Paste</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'z'] })}>Undo</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'a'] })}>Select All</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 's'] })}>Save</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => sendInput('shortcut', { keys: ['control', 'f'] })}>Find</button>
+                <button className="mod-btn" style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', background: 'rgba(239, 68, 68, 0.4)' }} onClick={() => setShowKeyboard(false)}>Close</button>
+              </div>
+              <div style={{ display: 'flex', width: '100%', gap: '10px' }}>
+                <input 
+                  type="text" 
+                  value={keyboardText}
+                  onChange={(e) => setKeyboardText(e.target.value)}
+                  placeholder="Type to send to desktop..."
+                  className="keyboard-input"
+                  style={{ flex: 1 }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (keyboardText) {
+                        sendInput('type-text', { text: keyboardText });
+                      }
+                      sendInput('key-event', { action: 'down', key: 'enter' });
+                      setTimeout(() => sendInput('key-event', { action: 'up', key: 'enter' }), 50);
+                      setKeyboardText('');
+                    }
+                  }}
+                />
+                <button 
+                  className="keyboard-send-btn"
+                  onClick={() => {
                     if (keyboardText) {
                       sendInput('type-text', { text: keyboardText });
                     }
                     sendInput('key-event', { action: 'down', key: 'enter' });
                     setTimeout(() => sendInput('key-event', { action: 'up', key: 'enter' }), 50);
                     setKeyboardText('');
-                    setShowKeyboard(false);
-                  }
-                }}
-              />
-              <button 
-                className="keyboard-send-btn"
-                onClick={() => {
-                  if (keyboardText) {
-                    sendInput('type-text', { text: keyboardText });
-                  }
-                  sendInput('key-event', { action: 'down', key: 'enter' });
-                  setTimeout(() => sendInput('key-event', { action: 'up', key: 'enter' }), 50);
-                  setKeyboardText('');
-                  setShowKeyboard(false);
-                }}
-              >Send</button>
+                  }}
+                >Send</button>
+              </div>
             </div>
           )}
+
 
           {/* Desktop Switcher Overlay */}
           {showDesktopSwitcher && (
