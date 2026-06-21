@@ -139,7 +139,6 @@ function App() {
   // Video transform states
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [autoFocus, setAutoFocus] = useState(false);
 
   // Display & Quality States
   const [desktopSources, setDesktopSources] = useState<{id: string, name: string}[]>([]);
@@ -299,20 +298,27 @@ function App() {
     };
   }, [pin]);
 
-  // --- Auto-Focus Engine ---
+  // --- Auto-Focus Engine (Edge Detection) ---
   useEffect(() => {
-    if (!autoFocus || scale <= 1) return;
+    if (scale <= 1) return;
     
     let animationFrame: number;
     const updateFocus = () => {
+      // Don't fight manual two-finger panning
+      if (maxTouches.current >= 2) {
+        animationFrame = requestAnimationFrame(updateFocus);
+        return;
+      }
+
       const video = videoRef.current;
-      if (!video) return;
+      if (!video) {
+        animationFrame = requestAnimationFrame(updateFocus);
+        return;
+      }
       
-      // Need unscaled dimensions for calculation
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
 
-      // Calculate video aspect ratio fitting
       const videoRatio = video.videoWidth / video.videoHeight || 16/9;
       const elementRatio = screenW / screenH;
       
@@ -330,35 +336,45 @@ function App() {
       }
 
       // Cursor's physical coordinate in unscaled screen space
-      const cursorX = offsetX + displayedWidth * cursorPctRef.current.x;
-      const cursorY = offsetY + displayedHeight * cursorPctRef.current.y;
+      const cursorUnscaledX = offsetX + displayedWidth * cursorPctRef.current.x;
+      const cursorUnscaledY = offsetY + displayedHeight * cursorPctRef.current.y;
       
-      // We want to keep the cursor within a 20% padded bounding box of the physical screen
-      // However, the screen is scaled. 
-      // The physical screen coordinates of the viewport bounds in unscaled space are modified by pan and scale.
-      
-      // Let's just do a simpler continuous smooth follow if cursor is out of bounds
-      // Center of screen:
       const cx = screenW / 2;
       const cy = screenH / 2;
-      
-      // We want pan to approach (- (cursorX - cx), - (cursorY - cy))
-      const targetPanX = -(cursorX - cx);
-      const targetPanY = -(cursorY - cy);
-      
+
       setPan(prev => {
-        // Smooth lerp towards target
+        // Calculate the current screen position of the cursor with existing pan and scale
+        const screenX = cx + (cursorUnscaledX - cx) * scale + prev.x;
+        const screenY = cy + (cursorUnscaledY - cy) * scale + prev.y;
+
+        // Define bounding box padding (15% of screen size)
+        const padX = screenW * 0.15;
+        const padY = screenH * 0.15;
+
+        let targetPanX = prev.x;
+        let targetPanY = prev.y;
+
+        if (screenX < padX) {
+          targetPanX = prev.x + (padX - screenX);
+        } else if (screenX > screenW - padX) {
+          targetPanX = prev.x - (screenX - (screenW - padX));
+        }
+
+        if (screenY < padY) {
+          targetPanY = prev.y + (padY - screenY);
+        } else if (screenY > screenH - padY) {
+          targetPanY = prev.y - (screenY - (screenH - padY));
+        }
+
         const diffX = targetPanX - prev.x;
         const diffY = targetPanY - prev.y;
         
-        // Only move if significantly far (creates a deadzone)
-        const distance = Math.hypot(diffX, diffY);
-        // scaled deadzone
-        if (distance < 20 / scale) return prev;
+        if (Math.abs(diffX) < 0.5 && Math.abs(diffY) < 0.5) return prev;
         
+        // Smoothly lerp towards the target pan that keeps the cursor in bounds
         return {
-          x: prev.x + diffX * 0.1,
-          y: prev.y + diffY * 0.1
+          x: prev.x + diffX * 0.2,
+          y: prev.y + diffY * 0.2
         };
       });
       
@@ -367,7 +383,7 @@ function App() {
     
     animationFrame = requestAnimationFrame(updateFocus);
     return () => cancelAnimationFrame(animationFrame);
-  }, [autoFocus, scale]);
+  }, [scale]);
 
   const handleRibbonScroll = () => {
     if (ribbonRef.current) {
@@ -530,15 +546,6 @@ function App() {
         
         if (Math.abs(finalDx) > 0.5 || Math.abs(finalDy) > 0.5) {
           sendInput('mouse-move', { dx: finalDx, dy: finalDy });
-        }
-        
-        // Auto-Follow Cursor Area when Zoomed
-        if (scale > 1) {
-          // Pan camera in opposite direction of movement to follow the cursor natively
-          setPan(prev => ({ 
-            x: prev.x - (dx * accel) / scale, 
-            y: prev.y - (dy * accel) / scale 
-          }));
         }
       } else if (controlMode === 'direct') {
         const video = videoRef.current;
@@ -1163,7 +1170,7 @@ function App() {
                 e.stopPropagation();
                 setScale(1); 
                 setPan({x:0, y:0}); 
-                setAutoFocus(false);
+                // No setAutoFocus needed since engine is automatic
               }}
             >
               Reset Zoom
