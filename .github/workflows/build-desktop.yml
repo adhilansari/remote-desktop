@@ -6,12 +6,9 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    name: Build & Release on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
+  build-windows:
+    name: Build & Release on Windows
+    runs-on: windows-latest
     permissions:
       contents: write
 
@@ -37,14 +34,39 @@ jobs:
         run: npm install
 
       - name: Build and Publish Executable to GitHub (Windows)
-        if: matrix.os == 'windows-latest'
         working-directory: keenfresh-desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release:win
 
+  build-mac:
+    name: Build & Release on Mac
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Shared Dependencies
+        working-directory: keenfresh-shared
+        run: npm install
+
+      - name: Build Shared Package
+        working-directory: keenfresh-shared
+        run: npm run build
+
+      - name: Install Desktop Dependencies
+        working-directory: keenfresh-desktop
+        run: npm install
+
       - name: Build and Publish Executable to GitHub (Mac)
-        if: matrix.os == 'macos-latest'
         working-directory: keenfresh-desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
