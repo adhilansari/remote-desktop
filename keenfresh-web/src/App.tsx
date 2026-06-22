@@ -158,6 +158,7 @@ function App() {
   const [showPowerMenu, setShowPowerMenu] = useState(false);
   const [powerMenuPassword, setPowerMenuPassword] = useState('');
   const [showPowerUnlockInput, setShowPowerUnlockInput] = useState(false);
+  const [isPcLocked, setIsPcLocked] = useState(false);
 
   // PWA Install States
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -363,10 +364,20 @@ function App() {
                 if (msg.data.length > 0) {
                   setCurrentSourceId(prev => prev || msg.data[0].id);
                 }
+              } else if (msg.type === 'system-status') {
+                setIsPcLocked(msg.data.isLocked);
               } else if (msg.type === 'cursor-sync') {
                 cursorPctRef.current = { x: msg.data.xPct, y: msg.data.yPct };
               }
-            } catch (err) {}
+            } catch (err) {
+              console.error('Data channel parse error', err);
+            }
+          };
+
+          e.channel.onopen = () => {
+            if (e.channel.readyState === 'open') {
+              e.channel.send(JSON.stringify({ type: 'request-system-status', data: {} }));
+            }
           };
         };
       }
@@ -958,6 +969,40 @@ function App() {
           <div>FPS: <span style={{color: '#38bdf8'}}>{networkStats.fps}</span></div>
           <div>Bitrate: <span style={{color: '#38bdf8'}}>{networkStats.bitrate} kbps</span></div>
           <div>Ping: <span style={{color: '#38bdf8'}}>{networkStats.latency} ms</span></div>
+        </div>
+      )}
+
+      {/* Lock Screen Overlay */}
+      {streamActive && isPcLocked && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+          zIndex: 60, color: '#fff'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔒</div>
+          <h2 style={{ margin: '0 0 10px 0' }}>PC is Locked</h2>
+          <p style={{ opacity: 0.8, marginBottom: '20px', textAlign: 'center', maxWidth: '300px' }}>
+            Enter your Windows Password or PIN to securely unlock the remote PC.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '300px' }}>
+            <input 
+              type="password"
+              value={powerMenuPassword}
+              onChange={(e) => setPowerMenuPassword(e.target.value)}
+              placeholder="Windows Password"
+              style={{ padding: '12px', borderRadius: '8px', border: '1px solid #38bdf8', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '16px' }}
+            />
+            <button 
+              onClick={() => {
+                sendInput('unlock', { password: powerMenuPassword });
+                setPowerMenuPassword('');
+              }}
+              style={{ padding: '12px', borderRadius: '8px', background: '#38bdf8', color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' }}
+            >
+              Unlock
+            </button>
+          </div>
         </div>
       )}
 

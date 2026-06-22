@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -12,6 +12,7 @@ let globalPin = '';
 
 let hiddenWindow: BrowserWindow | null = null;
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+let isLocked = false;
 
 function showPrivacyOverlay() {
   if (process.platform === 'win32') {
@@ -66,6 +67,15 @@ app.whenReady().then(() => {
   
   hiddenWindow?.webContents.on('did-finish-load', () => {
     connectToRelay();
+  });
+
+  powerMonitor.on('lock-screen', () => {
+    isLocked = true;
+    hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked: true } });
+  });
+  powerMonitor.on('unlock-screen', () => {
+    isLocked = false;
+    hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked: false } });
   });
 
   app.on('activate', () => {
@@ -228,6 +238,9 @@ function connectToRelay() {
           console.error('File save failed', e);
         }
       }
+    }
+    else if (type === 'request-system-status') {
+      hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked } });
     }
   });
 
