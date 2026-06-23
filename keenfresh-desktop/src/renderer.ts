@@ -272,9 +272,17 @@ ipcRenderer.on('set-clients', (event, count) => {
   updateStatusUI();
 });
 
-ipcRenderer.on('client-joined', () => {
+ipcRenderer.on('client-joined', (event, data) => {
   connectedClients++;
   updateStatusUI();
+  
+  if (data && data.deviceName) {
+    const nameEl = document.getElementById('connected-device-name');
+    if (nameEl) nameEl.textContent = data.deviceName + ' Connected';
+  } else {
+    const nameEl = document.getElementById('connected-device-name');
+    if (nameEl) nameEl.textContent = 'Mobile Session Active';
+  }
 });
 
 ipcRenderer.on('client-left', (event, data) => {

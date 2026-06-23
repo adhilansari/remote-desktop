@@ -298,7 +298,23 @@ function App() {
     socket.on('connect', () => {
       setConnected(true);
       setIsReconnecting(false);
-      socket.emit('join-room', { pin, clientType: 'mobile' });
+      function getDeviceName() {
+      const ua = navigator.userAgent;
+      if (/iPad|iPhone|iPod/.test(ua)) return "iPhone/iPad";
+      if (/Android/.test(ua)) {
+        const match = ua.match(/Android.*?; (.*?) Build/);
+        return match && match[1] ? match[1] : "Android Device";
+      }
+      if (/Macintosh/.test(ua)) return "Mac";
+      if (/Windows/.test(ua)) return "Windows PC";
+      return "Trusted Device";
+    }
+
+    socket.emit('join-room', { 
+      pin, 
+      clientType: 'mobile',
+      deviceName: getDeviceName() 
+    });
     });
 
     socket.on('client-joined', (data: any) => {

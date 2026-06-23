@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor, Menu } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -42,7 +42,18 @@ function hidePrivacyOverlay() {
   }
 }
 
+
+
+// Catch all unhandled errors silently so the app doesn't show default Electron error dialogs
+process.on('uncaughtException', (err) => {
+  console.error('Caught unhandled exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Caught unhandled rejection:', reason);
+});
+
 function createHiddenWindow() {
+  Menu.setApplicationMenu(null); // Remove default File/Edit/View menu
 
   hiddenWindow = new BrowserWindow({
     width: 850,
@@ -51,6 +62,7 @@ function createHiddenWindow() {
     minHeight: 600,
     center: true,
     show: true, // Set to false in production
+    autoHideMenuBar: true, // Hides the menu bar
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
