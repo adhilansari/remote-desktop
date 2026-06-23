@@ -865,15 +865,18 @@ function App() {
   };
 
   const pwaInstallModal = showInstallPrompt && (
-    <div className="pwa-install-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
-      <div className="glass-panel" style={{ width: '85%', maxWidth: '400px', textAlign: 'center', padding: '30px', animation: 'fadeIn 0.3s ease' }}>
-        <h2 className="text-gradient" style={{ margin: '0 0 10px 0', fontSize: '28px' }}>Install KeenFresh</h2>
-        <p style={{ opacity: 0.8, marginBottom: '25px', lineHeight: 1.5, fontSize: '15px' }}>
+    <div className="pwa-install-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999, padding: '20px' }}>
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', textAlign: 'center', padding: '40px 30px', animation: 'fadeIn 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', borderRadius: '20px', width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', boxShadow: '0 10px 20px rgba(236, 72, 153, 0.4)' }}>
+          <span style={{ fontSize: '32px' }}>📱</span>
+        </div>
+        <h2 className="text-gradient" style={{ margin: '0 0 12px 0', fontSize: '26px' }}>Install App</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '25px', lineHeight: 1.5, fontSize: '15px' }}>
           Install KeenFresh to your home screen for a seamless, fullscreen native app experience!
         </p>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <button onClick={() => setShowInstallPrompt(false)} className="btn-secondary" style={{ flex: 1, padding: '12px' }}>Not Now</button>
-          <button onClick={handleInstallClick} className="btn-primary" style={{ flex: 1, padding: '12px' }}>Install App</button>
+        <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+          <button onClick={() => setShowInstallPrompt(false)} className="btn-secondary" style={{ flex: 1, padding: '14px', borderRadius: '16px' }}>Not Now</button>
+          <button onClick={handleInstallClick} className="btn-primary" style={{ flex: 1, padding: '14px', borderRadius: '16px' }}>Install</button>
         </div>
       </div>
     </div>
@@ -912,15 +915,15 @@ function App() {
       
       {!streamActive && (
         <div className="gradient-bg" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', position: 'absolute', zIndex: 50 }}>
-          <div className="glass-panel" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'pulse 2s infinite' }}>
-            <div style={{ background: '#E65100', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+          <div className="glass-panel" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'pulse-glow 2s infinite', maxWidth: '90%', textAlign: 'center' }}>
+            <div style={{ background: 'linear-gradient(135deg, #ff7e5f, #feb47b)', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 10px 20px rgba(255, 126, 95, 0.4)' }}>
               <span style={{ fontSize: '40px', color: 'white' }}>🖥️</span>
             </div>
-            <h2 style={{ color: 'white', marginBottom: '8px' }}>Connecting...</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Establishing secure P2P connection</p>
+            <h2 className="text-gradient" style={{ fontSize: '28px', marginBottom: '8px' }}>Connecting...</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>Establishing secure P2P connection</p>
             <button 
               className="btn-secondary" 
-              style={{ marginTop: '24px' }}
+              style={{ padding: '12px 30px', fontSize: '16px', borderRadius: '16px', width: '100%' }}
               onClick={() => {
                 setPin(null);
                 setConnected(false);
@@ -935,27 +938,26 @@ function App() {
 
       {/* Onboarding Overlay */}
       {streamActive && showOnboarding && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)',
-          zIndex: 9000, display: 'flex', flexDirection: 'column', 
-          alignItems: 'center', justifyContent: 'center', color: '#fff', padding: '20px', textAlign: 'center'
-        }}>
-          <h2 style={{ fontSize: '24px', marginBottom: '10px', color: '#38bdf8' }}>Connection Established!</h2>
-          <p style={{ fontSize: '16px', lineHeight: '1.5', marginBottom: '30px', color: '#cbd5e1' }}>
-            Your desktop is now in your hands. <br/><br/>
-            👆 <b>Tap</b> to Click<br/>
-            ✌️ <b>Two-Finger Tap</b> to Right-Click<br/>
-            🙌 <b>Three-Finger Tap</b> for Menus<br/>
-            👌 <b>Pinch</b> to Zoom In/Out<br/>
-          </p>
-          <button 
-            className="btn-primary" 
-            onClick={() => setShowOnboarding(false)}
-            style={{ padding: '12px 24px', fontSize: '16px', borderRadius: '12px', background: '#38bdf8', color: '#000', fontWeight: 'bold' }}
-          >
-            Got it, let's go!
-          </button>
+        <div className="gradient-bg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ padding: '40px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '400px', width: '100%', textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
+            <div style={{ background: 'linear-gradient(135deg, #4facfe, #00f2fe)', borderRadius: '50%', width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', boxShadow: '0 10px 20px rgba(0, 242, 254, 0.3)' }}>
+              <span style={{ fontSize: '32px' }}>✨</span>
+            </div>
+            <h2 className="text-gradient" style={{ margin: '0 0 12px 0', fontSize: '26px' }}>You're Connected!</h2>
+            <div style={{ color: 'var(--text-main)', marginBottom: '30px', lineHeight: '1.8', fontSize: '15px', textAlign: 'left', background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+              <div style={{ marginBottom: '8px' }}>👆 <b style={{ color: 'var(--primary-cyan)' }}>Tap</b> to Click</div>
+              <div style={{ marginBottom: '8px' }}>✌️ <b style={{ color: 'var(--primary-cyan)' }}>Two-Finger Tap</b> to Right-Click</div>
+              <div style={{ marginBottom: '8px' }}>🙌 <b style={{ color: 'var(--primary-cyan)' }}>Three-Finger Tap</b> for Menus</div>
+              <div>👌 <b style={{ color: 'var(--primary-cyan)' }}>Pinch</b> to Zoom In/Out</div>
+            </div>
+            <button 
+              className="btn-primary" 
+              onClick={() => setShowOnboarding(false)}
+              style={{ padding: '16px', fontSize: '16px', width: '100%' }}
+            >
+              Start Controlling
+            </button>
+          </div>
         </div>
       )}
 
@@ -974,34 +976,35 @@ function App() {
 
       {/* Lock Screen Overlay */}
       {streamActive && isPcLocked && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-          zIndex: 60, color: '#fff'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔒</div>
-          <h2 style={{ margin: '0 0 10px 0' }}>PC is Locked</h2>
-          <p style={{ opacity: 0.8, marginBottom: '20px', textAlign: 'center', maxWidth: '300px' }}>
-            Enter your Windows Password or PIN to securely unlock the remote PC.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '300px' }}>
-            <input 
-              type="password"
-              value={powerMenuPassword}
-              onChange={(e) => setPowerMenuPassword(e.target.value)}
-              placeholder="Windows Password"
-              style={{ padding: '12px', borderRadius: '8px', border: '1px solid #38bdf8', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '16px' }}
-            />
-            <button 
-              onClick={() => {
-                sendInput('unlock', { password: powerMenuPassword });
-                setPowerMenuPassword('');
-              }}
-              style={{ padding: '12px', borderRadius: '8px', background: '#38bdf8', color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' }}
-            >
-              Unlock
-            </button>
+        <div className="gradient-bg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 60, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ padding: '40px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '400px', width: '100%', textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
+            <div style={{ background: 'linear-gradient(135deg, #f43f5e, #fb923c)', borderRadius: '50%', width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', boxShadow: '0 10px 20px rgba(244, 63, 94, 0.4)' }}>
+              <span style={{ fontSize: '32px' }}>🔒</span>
+            </div>
+            <h2 className="text-gradient" style={{ margin: '0 0 12px 0', fontSize: '26px' }}>PC is Locked</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5', fontSize: '15px' }}>
+              Enter your Windows Password or PIN to securely unlock the remote PC.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+              <input 
+                type="password"
+                className="glass-input"
+                value={powerMenuPassword}
+                onChange={(e) => setPowerMenuPassword(e.target.value)}
+                placeholder="Windows Password"
+                style={{ padding: '16px', fontSize: '16px', textAlign: 'center', letterSpacing: '2px' }}
+              />
+              <button 
+                className="btn-primary"
+                onClick={() => {
+                  sendInput('unlock', { password: powerMenuPassword });
+                  setPowerMenuPassword('');
+                }}
+                style={{ padding: '16px', fontSize: '16px', width: '100%' }}
+              >
+                Unlock PC
+              </button>
+            </div>
           </div>
         </div>
       )}
