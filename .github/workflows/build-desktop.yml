@@ -71,3 +71,36 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release:mac
+
+  build-linux:
+    name: Build & Release on Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Shared Dependencies
+        working-directory: keenfresh-shared
+        run: npm install
+
+      - name: Build Shared Package
+        working-directory: keenfresh-shared
+        run: npm run build
+
+      - name: Install Desktop Dependencies
+        working-directory: keenfresh-desktop
+        run: npm install
+
+      - name: Build and Publish Executable to GitHub (Linux)
+        working-directory: keenfresh-desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release:linux

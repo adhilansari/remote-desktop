@@ -34,7 +34,7 @@ const remoteCommands = `
 try {
   console.log(`Connecting to ${server}...`);
   // -o StrictHostKeyChecking=no prevents the prompt asking "Are you sure you want to continue connecting?"
-  const command = `ssh -i ${pemKey} -o StrictHostKeyChecking=no ${server} "${remoteCommands}"`;
+  const command = `ssh -i ${pemKey} -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ${server} "${remoteCommands}"`;
   
   execSync(command, { stdio: 'inherit' });
 } catch (error) {
