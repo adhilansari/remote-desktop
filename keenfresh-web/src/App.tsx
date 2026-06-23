@@ -382,6 +382,8 @@ function App() {
                 }
               } else if (msg.type === 'system-status') {
                 setIsPcLocked(msg.data.isLocked);
+              } else if (msg.type === 'unlock-failed') {
+                alert("Incorrect PIN! The device could not be unlocked.");
               } else if (msg.type === 'cursor-sync') {
                 cursorPctRef.current = { x: msg.data.xPct, y: msg.data.yPct };
               }
@@ -999,7 +1001,7 @@ function App() {
             </div>
             <h2 className="text-gradient" style={{ margin: '0 0 12px 0', fontSize: '26px' }}>PC is Locked</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5', fontSize: '15px' }}>
-              Enter your Windows Password or PIN to securely unlock the remote PC.
+              Enter the 6-digit Access PIN to securely unlock the remote PC.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
               <input 
@@ -1007,7 +1009,7 @@ function App() {
                 className="glass-input"
                 value={powerMenuPassword}
                 onChange={(e) => setPowerMenuPassword(e.target.value)}
-                placeholder="Windows Password"
+                placeholder="Access PIN"
                 style={{ padding: '16px', fontSize: '16px', textAlign: 'center', letterSpacing: '2px' }}
               />
               <button 
@@ -1266,13 +1268,13 @@ function App() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ fontSize: '12px', opacity: 0.8, lineHeight: 1.4 }}>
-                    Enter your Windows Password or PIN to securely unlock the remote PC.
+                    Enter the 6-digit Access PIN to securely unlock the remote PC.
                   </div>
                   <input 
                     type="password"
                     value={powerMenuPassword}
                     onChange={(e) => setPowerMenuPassword(e.target.value)}
-                    placeholder="Windows Password"
+                    placeholder="Access PIN"
                     style={{ padding: '10px', borderRadius: '8px', border: '1px solid #38bdf8', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: '16px' }}
                   />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>

@@ -554,6 +554,26 @@
     };
   </script>
   <script>var exports = {};</script>
-  <script src="./renderer.js"></script>
+
+    <!-- Simulated Lock Screen Overlay -->
+    <div id="simulated-lock-screen" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); align-items: center; justify-content: center; flex-direction: column;">
+      <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);">
+        <span style="font-size: 50px; color: white;">🔒</span>
+      </div>
+      <h2 style="color: white; font-size: 32px; font-weight: 700; margin: 0 0 10px 0; letter-spacing: 1px;">Device Locked</h2>
+      <p style="color: #94a3b8; font-size: 16px; margin: 0 0 40px 0;">This device has been locked remotely.</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px; width: 100%; max-width: 400px; text-align: center;">
+        <p style="color: white; font-size: 15px; margin: 0 0 20px 0; font-weight: 500;">Enter the Access PIN to Unlock</p>
+        <input type="password" id="lock-pin-input" placeholder="000000" maxlength="6" style="background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 15px; color: white; font-size: 24px; letter-spacing: 10px; text-align: center; width: 100%; outline: none; margin-bottom: 20px; transition: border-color 0.2s;">
+        <button id="unlock-btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: white; padding: 16px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+          Unlock Device
+        </button>
+        <p id="lock-error-msg" style="color: #ef4444; font-size: 14px; margin: 15px 0 0 0; display: none;">Incorrect PIN. Please try again.</p>
+      </div>
+    </div>
+
+    <!-- Inject compiled TypeScript logic -->
+    <script src="renderer.js"></script>
 </body>
 </html>

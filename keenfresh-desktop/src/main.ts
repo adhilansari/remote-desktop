@@ -218,11 +218,29 @@ function connectToRelay() {
         } catch (e) {
           console.error('Screenshot failed', e);
         }
+      } else if (data.action === 'lock') {
+        isLocked = true;
+        hiddenWindow?.webContents.send('toggle-app-lock', true);
+        hiddenWindow?.setFullScreen(true);
+        hiddenWindow?.show();
+        hiddenWindow?.focus();
+        hiddenWindow?.setAlwaysOnTop(true, 'screen-saver');
+        hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked: true } });
       } else {
         await handleSystemAction(data);
       }
     }
-    else if (type === 'unlock') await handleUnlock(data);
+    else if (type === 'unlock') {
+      if (data.password === globalPin) {
+        isLocked = false;
+        hiddenWindow?.webContents.send('toggle-app-lock', false);
+        hiddenWindow?.setFullScreen(false);
+        hiddenWindow?.setAlwaysOnTop(false);
+        hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked: false } });
+      } else {
+        hiddenWindow?.webContents.send('webrtc-send', { type: 'unlock-failed', data: {} });
+      }
+    }
     else if (type === 'release-all-keys') await releaseAllModifiers();
     else if (type === 'clipboard-sync') {
       if (data && data.text) clipboard.writeText(data.text);
@@ -252,6 +270,14 @@ function connectToRelay() {
     else if (type === 'request-system-status') {
       hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked } });
     }
+  });
+
+  ipcMain.on('unlock-app-request', () => {
+    isLocked = false;
+    hiddenWindow?.webContents.send('toggle-app-lock', false);
+    hiddenWindow?.setFullScreen(false);
+    hiddenWindow?.setAlwaysOnTop(false);
+    hiddenWindow?.webContents.send('webrtc-send', { type: 'system-status', data: { isLocked: false } });
   });
 
   ipcMain.on('log', (event, msg) => {

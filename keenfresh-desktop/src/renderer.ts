@@ -293,3 +293,33 @@ ipcRenderer.on('client-left', (event, data) => {
   }
   updateStatusUI();
 });
+
+let currentAppPin = '';
+ipcRenderer.invoke('get-pairing-code').then(code => currentAppPin = code);
+
+ipcRenderer.on('toggle-app-lock', (event, locked) => {
+  const lockScreen = document.getElementById('simulated-lock-screen');
+  const errorMsg = document.getElementById('lock-error-msg');
+  const pinInput = document.getElementById('lock-pin-input') as HTMLInputElement;
+  
+  if (lockScreen) {
+    lockScreen.style.display = locked ? 'flex' : 'none';
+    if (locked && pinInput) {
+      pinInput.value = '';
+      if (errorMsg) errorMsg.style.display = 'none';
+      pinInput.focus();
+    }
+  }
+});
+
+document.getElementById('unlock-btn')?.addEventListener('click', () => {
+  const pinInput = document.getElementById('lock-pin-input') as HTMLInputElement;
+  const errorMsg = document.getElementById('lock-error-msg');
+  
+  if (pinInput.value === currentAppPin) {
+    if (errorMsg) errorMsg.style.display = 'none';
+    ipcRenderer.send('unlock-app-request');
+  } else {
+    if (errorMsg) errorMsg.style.display = 'block';
+  }
+});
