@@ -18,28 +18,12 @@ let previousBrightness = 100;
 let isPrivacyActive = false;
 
 function showPrivacyOverlay() {
-  if (process.platform === 'win32' && !isPrivacyActive) {
-    isPrivacyActive = true;
-    // Read the current brightness first
-    exec('powershell (Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightness).CurrentBrightness', (error, stdout) => {
-      if (!error && stdout) {
-        const parsed = parseInt(stdout.trim(), 10);
-        if (!isNaN(parsed) && parsed > 0) { // Don't save 0 if it was already dimmed
-          previousBrightness = parsed;
-        }
-      }
-      // Dim the physical laptop screen to 0% brightness for privacy
-      exec('powershell (Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1,0)');
-    });
-  }
+  // Disabled to prevent WebRTC capture from freezing on Windows
+  console.log("Privacy mode requested, but disabled to maintain WebRTC stream.");
 }
 
 function hidePrivacyOverlay() {
-  if (process.platform === 'win32' && isPrivacyActive) {
-    isPrivacyActive = false;
-    // Restore brightness to previous state
-    exec(`powershell (Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1,${previousBrightness})`);
-  }
+  // Disabled to prevent WebRTC capture from freezing on Windows
 }
 
 
