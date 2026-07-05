@@ -16,6 +16,11 @@ const remoteCommands = `
   { cd keenfresh || cd remote-desktop; } &&
   git fetch && git reset --hard origin/main &&
   
+  echo "\n--- Setting up Redis for Cluster Scaling ---" &&
+  (sudo apt-get update && sudo apt-get install -y redis-server || true) &&
+  sudo systemctl enable redis-server || true &&
+  sudo systemctl start redis-server || true &&
+  
   echo "\n--- Building KeenFresh Shared ---" &&
   cd keenfresh-shared &&
   npm install &&
@@ -33,9 +38,9 @@ const remoteCommands = `
   npm install &&
   npm run build &&
   
-  echo "\n--- Restarting Server ---" &&
+  echo "\n--- Restarting Server in Cluster Mode ---" &&
   (pm2 delete keenfresh-relay || true) &&
-  pm2 start dist/index.js --name keenfresh-relay -i 1 &&
+  pm2 start dist/index.js --name keenfresh-relay -i max &&
   
   echo "\n✅ DEPLOYMENT COMPLETE! ✅"
 `;

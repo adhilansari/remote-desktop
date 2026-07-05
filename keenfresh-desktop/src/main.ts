@@ -72,17 +72,30 @@ function createHiddenWindow() {
   });
 }
 
+function generateSecurePin() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars like 0, O, 1, I
+  let p1 = '';
+  let p2 = '';
+  for(let i=0; i<4; i++) p1 += chars.charAt(Math.floor(Math.random() * chars.length));
+  for(let i=0; i<4; i++) p2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  return p1 + '-' + p2;
+}
+
 app.whenReady().then(() => {
   const pinPath = path.join(app.getPath('userData'), 'keenfresh_pin.txt');
   try {
     if (fs.existsSync(pinPath)) {
       globalPin = fs.readFileSync(pinPath, 'utf8').trim();
+      if (globalPin.length !== 9 || !globalPin.includes('-')) {
+        globalPin = generateSecurePin();
+        fs.writeFileSync(pinPath, globalPin, 'utf8');
+      }
     } else {
-      globalPin = Math.floor(100000 + Math.random() * 900000).toString();
+      globalPin = generateSecurePin();
       fs.writeFileSync(pinPath, globalPin, 'utf8');
     }
   } catch (err) {
-    globalPin = Math.floor(100000 + Math.random() * 900000).toString();
+    globalPin = generateSecurePin();
   }
 
   createHiddenWindow();

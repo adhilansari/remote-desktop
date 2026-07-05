@@ -22,7 +22,7 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
   }, []);
 
   const handlePair = () => {
-    if (newPin.length === 6) {
+    if (newPin.length === 9) {
       // We don't know the hostname yet, it will be updated when connected
       const newDevice = { pin: newPin, hostname: 'Unknown Desktop' };
       const updated = [...savedDevices.filter(d => d.pin !== newPin), newDevice];
@@ -86,7 +86,7 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
             <ol style={{ paddingLeft: '20px', color: 'var(--text-muted)', lineHeight: '1.8', margin: '0 0 24px 0', fontSize: '15px' }}>
               <li style={{ marginBottom: '12px' }}>Go to the computer you want to remotely access (Windows 10+).</li>
               <li style={{ marginBottom: '12px' }}>Download and run the <b>KeenFresh Desktop Host</b>.</li>
-              <li style={{ marginBottom: '12px' }}>Look for the 6-digit pairing PIN on the desktop screen.</li>
+              <li style={{ marginBottom: '12px' }}>Look for the 9-character pairing PIN on the desktop screen.</li>
             </ol>
             
             {!showAddForm ? (
@@ -102,11 +102,15 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
                 <input 
                   type="text" 
                   value={newPin} 
-                  onChange={e => setNewPin(e.target.value)} 
-                  placeholder="000000" 
+                  onChange={e => {
+                    let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4, 8);
+                    setNewPin(val);
+                  }} 
+                  placeholder="ABCD-1234" 
                   className="glass-input"
                   style={{ flex: 1, fontSize: '20px', padding: '12px', textAlign: 'center', letterSpacing: '8px' }} 
-                  maxLength={6} 
+                  maxLength={9} 
                 />
                 <button 
                   onClick={handlePair} 
@@ -125,7 +129,7 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
 }
 
 function App() {
-  const [pin, setPin] = useState<string | null>(localStorage.getItem('keenfresh_pin'));
+  const [pin, setPin] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [streamActive, setStreamActive] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>('trackpad');

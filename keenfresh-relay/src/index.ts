@@ -25,8 +25,17 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, any, any>(serv
 });
 
 // Setup Redis Adapter for PM2 Cluster Mode scaling
-const pubClient = new Redis();
+const pubClient = new Redis({
+  retryStrategy(times) {
+    console.warn(`Retrying Redis connection... attempt ${times}`);
+    return Math.min(times * 50, 2000);
+  }
+});
 const subClient = pubClient.duplicate();
+
+pubClient.on('error', (err) => console.error('Redis pubClient Error', err));
+subClient.on('error', (err) => console.error('Redis subClient Error', err));
+
 io.adapter(createAdapter(pubClient, subClient));
 
 app.get('/health', (req, res) => {
