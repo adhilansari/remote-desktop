@@ -22,6 +22,12 @@ const remoteCommands = `
   npm run build &&
   cd .. &&
   
+  echo "\n--- Building KeenFresh Web ---" &&
+  cd keenfresh-web &&
+  npm install &&
+  npm run build &&
+  cd .. &&
+  
   echo "\n--- Building KeenFresh Relay ---" &&
   cd keenfresh-relay &&
   npm install &&
