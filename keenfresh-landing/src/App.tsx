@@ -1,4 +1,4 @@
-import { Download, Monitor, Smartphone, ShieldCheck, Coffee, Ghost, Cpu, Server, Globe, ArrowRight } from 'lucide-react';
+import { Download, Smartphone, ShieldCheck, Coffee, Ghost, Cpu, Server, Globe, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function App() {
