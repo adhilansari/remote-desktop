@@ -11,8 +11,10 @@ const server = 'ubuntu@13.207.194.101';
 // The exact commands to run on the AWS server
 const remoteCommands = `
   echo "--- Pulling latest code from GitHub ---" &&
-  (cd keenfresh || cd remote-desktop || (echo "Repository not found! Did you clone it into ~/keenfresh?" && exit 1)) &&
-  git pull origin main &&
+  cd ~ &&
+  (test -d keenfresh/.git || test -d remote-desktop/.git || (echo "Cloning repository..." && rm -rf keenfresh remote-desktop && git clone https://github.com/adhilansari/remote-desktop.git keenfresh)) &&
+  { cd keenfresh || cd remote-desktop; } &&
+  git fetch && git reset --hard origin/main &&
   
   echo "\n--- Building KeenFresh Shared ---" &&
   cd keenfresh-shared &&
@@ -34,10 +36,26 @@ const remoteCommands = `
 
 try {
   console.log(`Connecting to ${server}...`);
-  // -o StrictHostKeyChecking=no prevents the prompt asking "Are you sure you want to continue connecting?"
-  const command = `ssh -i ${pemKey} -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ${server} "${remoteCommands}"`;
+  const { spawn } = require('child_process');
   
-  execSync(command, { stdio: 'inherit' });
+  const child = spawn('ssh', [
+    '-i', pemKey,
+    '-o', 'StrictHostKeyChecking=no',
+    '-o', 'ServerAliveInterval=60',
+    '-o', 'ServerAliveCountMax=10',
+    server,
+    'bash'
+  ], { stdio: ['pipe', 'inherit', 'inherit'] });
+  
+  child.stdin.write(remoteCommands);
+  child.stdin.end();
+
+  child.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`\n❌ [ERROR] Deployment failed with exit code ${code}`);
+    }
+  });
+
 } catch (error) {
   console.error(`\n❌ [ERROR] Deployment failed! Make sure your AWS server is running and the .pem file is correct.`);
 }
