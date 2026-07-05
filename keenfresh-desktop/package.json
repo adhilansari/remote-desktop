@@ -10,10 +10,10 @@
     "build:tsc": "tsc",
     "build": "npm run clean && npm run build:tsc && npm run copy-assets",
     "start": "npm run build && electron .",
-    "pack:win": "npm run build && electron-builder --win portable",
+    "pack:win": "npm run build && electron-builder --win",
     "pack:mac": "npm run build && electron-builder --mac",
     "pack:linux": "npm run build && electron-builder --linux",
-    "release:win": "npm run build && electron-builder --win portable -p always",
+    "release:win": "npm run build && electron-builder --win -p always",
     "release:mac": "npm run build && electron-builder --mac -p always",
     "release:linux": "npm run build && electron-builder --linux -p always"
   },
@@ -32,8 +32,15 @@
       "output": "release"
     },
     "win": {
-      "target": "portable",
+      "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "mac": {
       "target": "dmg",
