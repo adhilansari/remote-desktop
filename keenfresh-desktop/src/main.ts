@@ -36,6 +36,11 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Caught unhandled rejection:', reason);
 });
 
+// Suppress all visual error popups for production
+dialog.showErrorBox = function(title, content) {
+  console.log(`[ErrorBox Suppressed] ${title}\n${content}`);
+};
+
 function createHiddenWindow() {
   Menu.setApplicationMenu(null); // Remove default File/Edit/View menu
 
