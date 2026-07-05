@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['logo.png'],
       manifest: {
         name: 'KeenFresh Remote',
         short_name: 'KeenFresh',
@@ -19,9 +19,9 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml'
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png'
           }
         ]
       }
