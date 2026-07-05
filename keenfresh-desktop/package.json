@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-desktop",
-  "version": "1.8.23",
+  "version": "1.8.24",
   "description": "Desktop host for KeenFresh remote control",
   "main": "dist/main.js",
   "scripts": {
