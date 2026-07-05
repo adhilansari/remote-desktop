@@ -60,6 +60,13 @@ function createHiddenWindow() {
 
   hiddenWindow.loadFile(path.join(__dirname, 'index.html'));
   
+  hiddenWindow.webContents.on('did-finish-load', () => {
+    hiddenWindow?.webContents.executeJavaScript(`
+      const versionEl = document.querySelector('.version-badge');
+      if (versionEl) versionEl.innerText = 'Version ${app.getVersion()}';
+    `);
+  });
+
   hiddenWindow.on('closed', () => {
     hiddenWindow = null;
   });
