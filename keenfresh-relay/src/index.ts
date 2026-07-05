@@ -5,6 +5,8 @@ import cors from 'cors';
 import path from 'path';
 import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'keenfresh-shared';
 import { handleSocketEvents } from './handlers/socketHandlers';
+import Redis from 'ioredis';
+import { createAdapter } from '@socket.io/redis-adapter';
 
 const app = express();
 app.use(cors());
@@ -22,6 +24,11 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, any, any>(serv
   }
 });
 
+// Setup Redis Adapter for PM2 Cluster Mode scaling
+const pubClient = new Redis();
+const subClient = pubClient.duplicate();
+io.adapter(createAdapter(pubClient, subClient));
+
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
@@ -29,16 +36,66 @@ app.get('/health', (req, res) => {
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on('join-room', (data: RoomPayload) => {
+  socket.on('join-room', async (data: RoomPayload) => {
     try {
+      // Basic IP Rate Limiting for brute force protection (max 10 attempts per minute)
+      const ip = socket.handshake.address;
+      const rateLimitKey = `ratelimit:${ip}`;
+      const attempts = await pubClient.incr(rateLimitKey);
+      if (attempts === 1) {
+        await pubClient.expire(rateLimitKey, 60);
+      }
+      if (attempts > 10) {
+        socket.emit('room-error', { message: 'Too many attempts. Please try again later.' });
+        return;
+      }
+
       const validatedData = RoomJoinSchema.parse(data);
       const room = validatedData.pin || 'default-room';
       const role = validatedData.clientType;
 
-      socket.join(room);
-      console.log(`Socket ${socket.id} joined room ${room} as ${role}`);
+      if (role === 'desktop') {
+        // Desktop joins immediately and creates the room
+        socket.join(room);
+        console.log(`Desktop ${socket.id} joined room ${room}`);
+        (socket as any).room = room;
+        (socket as any).role = role;
+        
+        const clientsInRoom = io.sockets.adapter.rooms.get(room);
+        const clientIds = clientsInRoom ? Array.from(clientsInRoom) : [];
+        
+        socket.emit('room-joined', { room, role, otherClientIds: clientIds.filter(id => id !== socket.id) });
+        handleSocketEvents(socket, room);
+      } else {
+        // Mobile device requests consent
+        (socket as any).pendingRoom = room;
+        (socket as any).pendingRole = role;
+        (socket as any).pendingHostname = validatedData.hostname;
+        
+        const deviceName = validatedData.deviceName || 'Unknown Mobile Device';
+        socket.to(room).emit('connection-request', { clientId: socket.id, deviceName });
+        socket.emit('connection-pending', { message: 'Waiting for desktop approval...' });
+      }
 
-      // Optional: keep track of roles on the socket itself for handler access
+    } catch (e) {
+      console.error('Invalid join-room payload', e);
+      socket.emit('room-error', { message: 'Invalid join-room payload' });
+    }
+  });
+
+  socket.on('connection-accepted', (data: { targetClientId: string }) => {
+    io.to(data.targetClientId).emit('connection-accepted', { room: (socket as any).room });
+  });
+
+  socket.on('connection-rejected', (data: { targetClientId: string }) => {
+    io.to(data.targetClientId).emit('connection-rejected', { reason: 'Connection declined by desktop' });
+  });
+
+  socket.on('finalize-join', () => {
+    const room = (socket as any).pendingRoom;
+    const role = (socket as any).pendingRole;
+    if (room && role) {
+      socket.join(room);
       (socket as any).room = room;
       (socket as any).role = role;
 
@@ -46,14 +103,8 @@ io.on('connection', (socket: Socket) => {
       const clientIds = clientsInRoom ? Array.from(clientsInRoom) : [];
 
       socket.emit('room-joined', { room, role, otherClientIds: clientIds.filter(id => id !== socket.id) });
-      socket.to(room).emit('client-joined', { clientId: socket.id, clientType: role, hostname: validatedData.hostname });
-
-      // Delegate the rest of the events
+      socket.to(room).emit('client-joined', { clientId: socket.id, clientType: role, hostname: (socket as any).pendingHostname });
       handleSocketEvents(socket, room);
-
-    } catch (e) {
-      console.error('Invalid join-room payload', e);
-      socket.emit('room-error', { message: 'Invalid join-room payload' });
     }
   });
 

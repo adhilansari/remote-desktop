@@ -25,8 +25,12 @@ const remoteCommands = `
   npm install &&
   npm run build &&
   
-  echo "\n--- Restarting Server ---" &&
-  (pm2 restart keenfresh-relay || pm2 start dist/index.js --name keenfresh-relay) &&
+  echo "\n--- Setting up Redis (if not present) ---" &&
+  (sudo systemctl is-active --quiet redis-server || (sudo DEBIAN_FRONTEND=noninteractive apt-get update -y && sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq redis-server && sudo systemctl enable redis-server && sudo systemctl start redis-server)) &&
+  
+  echo "\n--- Restarting Server in Cluster Mode ---" &&
+  (pm2 delete keenfresh-relay || true) &&
+  pm2 start dist/index.js --name keenfresh-relay -i max &&
   
   echo "\n✅ DEPLOYMENT COMPLETE! ✅"
 `;

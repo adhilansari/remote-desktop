@@ -132,6 +132,7 @@ function App() {
   const [activeModifiers, setActiveModifiers] = useState<string[]>([]);
   const [showUI, setShowUI] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState('Establishing secure P2P connection');
   const [keyboardText, setKeyboardText] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(false);
@@ -323,6 +324,22 @@ function App() {
         const updated = devices.map((d: any) => d.pin === pin ? { ...d, hostname: data.hostname } : d);
         localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
       }
+    });
+
+    socket.on('connection-pending', (data: any) => {
+      setConnectionMessage(data.message);
+    });
+
+    socket.on('connection-rejected', (data: any) => {
+      alert(data.reason || "Connection rejected by desktop.");
+      setPin(null);
+      localStorage.removeItem('keenfresh_pin');
+      socket.disconnect();
+    });
+
+    socket.on('connection-accepted', () => {
+      setConnectionMessage('Connection accepted, starting stream...');
+      socket.emit('finalize-join');
     });
 
     socket.on('disconnect', (reason) => {
@@ -938,7 +955,7 @@ function App() {
               <span style={{ fontSize: '40px', color: 'white' }}>🖥️</span>
             </div>
             <h2 className="text-gradient" style={{ fontSize: '28px', marginBottom: '8px' }}>Connecting...</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>Establishing secure P2P connection</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>{connectionMessage}</p>
             <button 
               className="btn-secondary" 
               style={{ padding: '12px 30px', fontSize: '16px', borderRadius: '16px', width: '100%' }}

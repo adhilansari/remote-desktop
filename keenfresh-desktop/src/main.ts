@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor, Menu, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -137,6 +137,30 @@ function connectToRelay() {
 
   let fileTransferBuffer = '';
   let currentFileName = '';
+
+  socket.on('connection-request', async (data) => {
+    console.log('Incoming connection request:', data);
+    
+    // Launch Privacy Screen Overlay immediately so they can't peek while waiting
+    showPrivacyOverlay();
+
+    const { response } = await dialog.showMessageBox({
+      type: 'question',
+      buttons: ['Accept', 'Reject'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Connection Request',
+      message: `${data.deviceName} is requesting remote access to your computer.`,
+      detail: 'If you accept, they will have full control over your mouse and keyboard.'
+    });
+
+    if (response === 0) {
+      socket?.emit('connection-accepted', { targetClientId: data.clientId });
+    } else {
+      socket?.emit('connection-rejected', { targetClientId: data.clientId });
+      hidePrivacyOverlay();
+    }
+  });
 
   let cursorInterval: NodeJS.Timeout | null = null;
   socket.on('client-joined', (data) => {

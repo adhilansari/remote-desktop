@@ -76,6 +76,7 @@ export interface RoomPayload {
   pin?: string;
   clientType: 'desktop' | 'mobile';
   hostname?: string;
+  deviceName?: string;
 }
 
 export interface SignalPayload {
@@ -88,8 +89,10 @@ export interface ServerToClientEvents {
   'room-error': (data: { message: string }) => void;
   'client-joined': (data: { clientId: string, clientType: string, hostname?: string }) => void;
   'client-left': (data: { clientId: string }) => void;
-  
-  // WebRTC Signaling
+  'connection-request': (data: { clientId: string, deviceName: string }) => void;
+  'connection-rejected': (data: { reason: string }) => void;
+  'connection-pending': (data: { message: string }) => void;
+  'connection-accepted': (data: { room: string }) => void;
   'webrtc-signal': (data: SignalPayload) => void;
 
   // Forwarded events
@@ -112,6 +115,9 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   'join-room': (data: RoomPayload) => void;
+  'finalize-join': () => void;
+  'connection-accepted': (data: { targetClientId: string }) => void;
+  'connection-rejected': (data: { targetClientId: string }) => void;
   
   // WebRTC Signaling
   'webrtc-signal': (data: SignalPayload) => void;
