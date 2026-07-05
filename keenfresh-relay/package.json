@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-relay",
-  "version": "1.8.27",
+  "version": "1.8.28",
   "description": "",
   "main": "index.js",
   "scripts": {
