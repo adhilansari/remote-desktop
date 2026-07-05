@@ -61,7 +61,7 @@ function App() {
           <motion.div variants={fadeInUp} className="hero-actions">
             <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary large group">
               <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
-              Download for Windows
+              View Releases on GitHub
             </a>
             <a href="#features" className="btn-secondary">
               See How It Works <ArrowRight size={18} />
@@ -205,7 +205,7 @@ function App() {
             <p>Download the lightweight Windows client today and finally step away from your monitor.</p>
             <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary massive pulse">
               <Download size={28} />
-              Download KeenFresh Setup.exe
+              Get KeenFresh from GitHub
             </a>
           </div>
         </motion.section>
