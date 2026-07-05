@@ -31,8 +31,8 @@ function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="navbar"
         >
-          <div className="logo">
-            <Monitor size={28} color="#a5b4fc" />
+          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/logo.png" alt="KeenFresh Logo" width="40" height="40" style={{ objectFit: 'contain' }} />
             KeenFresh
           </div>
           <div>
