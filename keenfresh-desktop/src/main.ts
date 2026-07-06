@@ -164,27 +164,28 @@ function connectToRelay() {
   let fileTransferBuffer = '';
   let currentFileName = '';
 
-  socket.on('connection-request', async (data) => {
+  socket.on('connection-request', (data) => {
     console.log('Incoming connection request:', data);
     
     // Launch Privacy Screen Overlay immediately so they can't peek while waiting
     showPrivacyOverlay();
 
-    const { response } = await dialog.showMessageBox({
-      type: 'question',
-      buttons: ['Accept', 'Reject'],
-      defaultId: 0,
-      cancelId: 1,
-      title: 'Connection Request',
-      message: `${data.deviceName} is requesting remote access to your computer.`,
-      detail: 'If you accept, they will have full control over your mouse and keyboard.'
-    });
+    if (hiddenWindow) {
+      hiddenWindow.show();
+      hiddenWindow.focus();
+      hiddenWindow.setAlwaysOnTop(true, 'floating');
+      setTimeout(() => hiddenWindow?.setAlwaysOnTop(false), 3000);
+      
+      hiddenWindow.webContents.send('incoming-connection', data);
 
-    if (response === 0) {
-      socket?.emit('connection-accepted', { targetClientId: data.clientId });
-    } else {
-      socket?.emit('connection-rejected', { targetClientId: data.clientId });
-      hidePrivacyOverlay();
+      ipcMain.once('connection-response', (event, response) => {
+        if (response.accepted) {
+          socket?.emit('connection-accepted', { targetClientId: data.clientId });
+        } else {
+          socket?.emit('connection-rejected', { targetClientId: data.clientId });
+          hidePrivacyOverlay();
+        }
+      });
     }
   });
 

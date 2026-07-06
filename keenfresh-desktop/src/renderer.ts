@@ -327,3 +327,25 @@ document.getElementById('unlock-btn')?.addEventListener('click', () => {
     if (errorMsg) errorMsg.style.display = 'block';
   }
 });
+
+// Custom UI Approval Logic
+ipcRenderer.on('incoming-connection', (event, data) => {
+  const overlay = document.getElementById('connection-approval-overlay');
+  const nameEl = document.getElementById('request-device-name');
+  if (overlay && nameEl) {
+    nameEl.textContent = data.deviceName || 'Unknown Device';
+    overlay.style.display = 'flex';
+  }
+});
+
+document.getElementById('accept-btn')?.addEventListener('click', () => {
+  const overlay = document.getElementById('connection-approval-overlay');
+  if (overlay) overlay.style.display = 'none';
+  ipcRenderer.send('connection-response', { accepted: true });
+});
+
+document.getElementById('reject-btn')?.addEventListener('click', () => {
+  const overlay = document.getElementById('connection-approval-overlay');
+  if (overlay) overlay.style.display = 'none';
+  ipcRenderer.send('connection-response', { accepted: false });
+});
