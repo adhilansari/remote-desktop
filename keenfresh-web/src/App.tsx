@@ -294,7 +294,7 @@ function App() {
   useEffect(() => {
     if (!pin) return;
 
-    const origin = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : window.location.origin;
+    const origin = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin;
     const socket = io(origin, {
       transports: ['websocket']
     });
