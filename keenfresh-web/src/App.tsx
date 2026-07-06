@@ -294,7 +294,7 @@ function App() {
   useEffect(() => {
     if (!pin) return;
 
-    const origin = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin;
+    const origin = import.meta.env.DEV ? 'http://localhost:3000' : 'wss://relay.keenfresh.com';
     const socket = io(origin, {
       transports: ['websocket']
     });

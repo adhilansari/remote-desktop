@@ -135,7 +135,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-const RELAY_SERVER_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://app.keenfresh.com';
+const RELAY_SERVER_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'wss://relay.keenfresh.com';
 
 function connectToRelay() {
   // Desktop is trusted internally, bypass token by passing role early
