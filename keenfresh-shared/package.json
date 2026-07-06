@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-shared",
-  "version": "1.8.33",
+  "version": "1.8.34",
   "description": "",
   "main": "dist/index.js", "types": "dist/index.d.ts",
   "scripts": {
