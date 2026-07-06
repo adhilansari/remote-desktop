@@ -25,13 +25,13 @@ async function initUI() {
   const ip = getLocalIp();
   let url = 'https://app.keenfresh.com';
   
-  const urlText = document.getElementById('url-text');
-  if (urlText) urlText.innerText = url;
-
   try {
     const code = await ipcRenderer.invoke('get-pairing-code');
     const pairingEl = document.getElementById('pairing-code');
     if (pairingEl) pairingEl.innerText = code;
+    url = `https://app.keenfresh.com/?pin=${code}`;
+    const urlText = document.getElementById('url-text');
+    if (urlText) urlText.innerText = url;
   } catch (e) {
     console.error('Failed to fetch pairing code', e);
   }
@@ -63,7 +63,11 @@ let currentSourceId: string | null = null;
 let currentQuality: '1080p60' | '720p30' | '480p15' = '1080p60';
 
 const rtcConfig = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
+    { urls: 'stun:stun.cloudflare.com:3478' }
+  ]
 };
 
 async function requestMedia(isSwap: boolean = false) {

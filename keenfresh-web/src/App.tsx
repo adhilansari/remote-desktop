@@ -19,6 +19,14 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
   useEffect(() => {
     const devices = JSON.parse(localStorage.getItem('keenfresh_devices') || '[]');
     setSavedDevices(devices);
+
+    const params = new URLSearchParams(window.location.search);
+    const pinParam = params.get('pin');
+    if (pinParam && pinParam.length === 9) {
+      setNewPin(pinParam);
+      setShowAddForm(true);
+      window.history.replaceState({}, '', '/');
+    }
   }, []);
 
   const handlePair = () => {
@@ -359,7 +367,11 @@ function App() {
       let pc = pcRef.current;
       if (!pc) {
         pc = new RTCPeerConnection({
-          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' },
+            { urls: 'stun:stun.cloudflare.com:3478' }
+          ]
         });
         pcRef.current = pc;
 
