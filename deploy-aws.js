@@ -38,9 +38,9 @@ const remoteCommands = `
   npm install &&
   npm run build &&
   
-  echo "\n--- Restarting Server in Cluster Mode ---" &&
+  echo "\n--- Restarting Server ---" &&
   (pm2 delete keenfresh-relay || true) &&
-  pm2 start dist/index.js --name keenfresh-relay -i max &&
+  pm2 start dist/index.js --name keenfresh-relay &&
   
   echo "\n✅ DEPLOYMENT COMPLETE! ✅"
 `;
