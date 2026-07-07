@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-workspace",
-  "version": "1.8.40",
+  "version": "1.8.41",
   "private": true,
   "description": "KeenFresh Root Workspace",
   "workspaces": [
