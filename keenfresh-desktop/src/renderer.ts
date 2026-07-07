@@ -512,9 +512,12 @@ ipcRenderer.on('close-pin-error', (event, msg) => {
 const authOverlay = document.getElementById('auth-overlay');
 const authEmail = document.getElementById('auth-email') as HTMLInputElement;
 const authPassword = document.getElementById('auth-password') as HTMLInputElement;
+const authConfirmPassword = document.getElementById('auth-confirm-password') as HTMLInputElement;
 const authError = document.getElementById('auth-error');
+const authSuccess = document.getElementById('auth-success');
 const btnLogin = document.getElementById('btn-login');
 const btnRegister = document.getElementById('btn-register');
+const btnForgot = document.getElementById('btn-forgot');
 
 let relayUrl = '';
 ipcRenderer.invoke('get-relay-url').then(url => {
@@ -531,19 +534,82 @@ function checkAuth() {
 
 checkAuth();
 
-async function handleAuthRequest(isRegister: boolean) {
-  if (!authEmail || !authPassword || !authError) return;
+let authMode: 'login' | 'register' | 'forgot' = 'login';
+
+function resetAuthUI() {
+  if (!authError || !authSuccess || !authConfirmPassword || !authPassword || !btnLogin || !btnRegister || !btnForgot) return;
+  authError.style.display = 'none';
+  authSuccess.style.display = 'none';
+  
+  if (authMode === 'login') {
+    authConfirmPassword.style.display = 'none';
+    authPassword.style.display = 'block';
+    btnLogin.innerText = 'Log In';
+    btnLogin.style.display = 'block';
+    btnRegister.innerText = 'Create an Account';
+    btnRegister.style.display = 'block';
+    btnForgot.style.display = 'block';
+  } else if (authMode === 'register') {
+    authConfirmPassword.style.display = 'block';
+    authPassword.style.display = 'block';
+    btnLogin.innerText = 'Register';
+    btnLogin.style.display = 'block';
+    btnRegister.innerText = 'Already have an account? Log in';
+    btnRegister.style.display = 'block';
+    btnForgot.style.display = 'none';
+  } else if (authMode === 'forgot') {
+    authConfirmPassword.style.display = 'none';
+    authPassword.style.display = 'none';
+    btnLogin.innerText = 'Send Reset Link';
+    btnLogin.style.display = 'block';
+    btnRegister.innerText = 'Back to Login';
+    btnRegister.style.display = 'block';
+    btnForgot.style.display = 'none';
+  }
+}
+
+btnRegister?.addEventListener('click', () => {
+  if (authMode === 'login') authMode = 'register';
+  else if (authMode === 'register') authMode = 'login';
+  else if (authMode === 'forgot') authMode = 'login';
+  resetAuthUI();
+});
+
+btnForgot?.addEventListener('click', () => {
+  authMode = 'forgot';
+  resetAuthUI();
+});
+
+async function handleAuthRequest() {
+  if (!authEmail || !authPassword || !authError || !authSuccess || !authConfirmPassword) return;
   const email = authEmail.value.trim();
   const password = authPassword.value.trim();
+  const confirmPassword = authConfirmPassword.value.trim();
 
-  if (!email || !password) {
-    authError.innerText = 'Please enter both email and password';
-    authError.style.display = 'block';
-    return;
+  authError.style.display = 'none';
+  authSuccess.style.display = 'none';
+
+  if (authMode === 'forgot') {
+    if (!email) {
+      authError.innerText = 'Please enter your email';
+      authError.style.display = 'block';
+      return;
+    }
+  } else {
+    if (!email || !password) {
+      authError.innerText = 'Please enter both email and password';
+      authError.style.display = 'block';
+      return;
+    }
+    if (authMode === 'register' && password !== confirmPassword) {
+      authError.innerText = 'Passwords do not match';
+      authError.style.display = 'block';
+      return;
+    }
   }
 
   try {
-    const endpoint = isRegister ? '/auth/register' : '/auth/login';
+    const endpoint = authMode === 'register' ? '/auth/register' : authMode === 'forgot' ? '/auth/forgot-password' : '/auth/login';
     const baseUrl = relayUrl.replace('ws://', 'http://').replace('wss://', 'https://');
     const res = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
@@ -552,11 +618,16 @@ async function handleAuthRequest(isRegister: boolean) {
     });
     const data = await res.json();
 
-    if (res.ok && data.token) {
-      localStorage.setItem('keenfresh-jwt', data.token);
-      localStorage.setItem('keenfresh-email', data.email);
-      authError.style.display = 'none';
-      checkAuth();
+    if (res.ok) {
+      if (authMode === 'forgot') {
+        authSuccess.innerText = data.message;
+        authSuccess.style.display = 'block';
+      } else if (data.token) {
+        localStorage.setItem('keenfresh-jwt', data.token);
+        localStorage.setItem('keenfresh-email', data.email);
+        authError.style.display = 'none';
+        checkAuth();
+      }
     } else {
       authError.innerText = data.error || 'Authentication failed';
       authError.style.display = 'block';
@@ -567,8 +638,7 @@ async function handleAuthRequest(isRegister: boolean) {
   }
 }
 
-btnLogin?.addEventListener('click', () => handleAuthRequest(false));
-btnRegister?.addEventListener('click', () => handleAuthRequest(true));
+btnLogin?.addEventListener('click', () => handleAuthRequest());
 
 // Auto-Start System Logic
 const autostartToggle = document.getElementById('autostart-toggle') as HTMLInputElement;

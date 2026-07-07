@@ -16,18 +16,64 @@ interface SavedDevice {
 const RELAY_URL = import.meta.env.DEV ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
 
 function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
-  const [isRegister, setIsRegister] = useState(false);
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get('token');
+  
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset'>(resetToken ? 'reset' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+
+    if (mode === 'forgot') {
+      if (!email) return setError('Email is required');
+      try {
+        const res = await fetch(`${RELAY_URL}/auth/forgot-password`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setSuccess(data.message);
+        } else {
+          setError(data.error);
+        }
+      } catch (err) {
+        setError('Network error connecting to relay');
+      }
+      return;
+    }
+
+    if (mode === 'reset') {
+      if (!password || password !== confirmPassword) return setError('Passwords do not match');
+      try {
+        const res = await fetch(`${RELAY_URL}/auth/reset-password`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: resetToken, newPassword: password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setSuccess('Password reset successful. You can now log in.');
+          setMode('login');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          setError(data.error);
+        }
+      } catch (err) {
+        setError('Network error connecting to relay');
+      }
+      return;
+    }
+
     if (!email || !password) return setError('Email and password required');
+    if (mode === 'register' && password !== confirmPassword) return setError('Passwords do not match');
     
     try {
-      const endpoint = isRegister ? '/auth/register' : '/auth/login';
+      const endpoint = mode === 'register' ? '/auth/register' : '/auth/login';
       const res = await fetch(`${RELAY_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,37 +94,70 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
     <div className="gradient-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: '20px' }}>
       <div className="glass-panel" style={{ padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
         <h1 className="text-gradient" style={{ fontSize: '32px', marginBottom: '10px' }}>KeenFresh</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>{isRegister ? 'Create your account' : 'Sign in to access your devices'}</p>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>
+          {mode === 'register' ? 'Create your account' : 
+           mode === 'forgot' ? 'Reset your password' : 
+           mode === 'reset' ? 'Enter new password' : 
+           'Sign in to access your devices'}
+        </p>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            placeholder="Email Address" 
-            className="glass-input" 
-            style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
-          />
-          <input 
-            type="password" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            placeholder="Password" 
-            className="glass-input" 
-            style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
-          />
+          {mode !== 'reset' && (
+            <input 
+              type="email" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              placeholder="Email Address" 
+              className="glass-input" 
+              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
+            />
+          )}
+          
+          {mode !== 'forgot' && (
+            <input 
+              type="password" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              placeholder={mode === 'reset' ? 'New Password' : 'Password'} 
+              className="glass-input" 
+              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
+            />
+          )}
+
+          {(mode === 'register' || mode === 'reset') && (
+            <input 
+              type="password" 
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
+              placeholder="Confirm Password" 
+              className="glass-input" 
+              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
+            />
+          )}
+
           {error && <div style={{ color: '#ef4444', fontSize: '14px', textAlign: 'left' }}>{error}</div>}
+          {success && <div style={{ color: '#10b981', fontSize: '14px', textAlign: 'left' }}>{success}</div>}
+          
           <button type="submit" className="btn-primary" style={{ padding: '15px', borderRadius: '12px', fontSize: '16px', marginTop: '10px' }}>
-            {isRegister ? 'Register' : 'Log In'}
+            {mode === 'register' ? 'Register' : mode === 'forgot' ? 'Send Reset Link' : mode === 'reset' ? 'Update Password' : 'Log In'}
           </button>
         </form>
         
-        <button 
-          onClick={() => setIsRegister(!isRegister)} 
-          style={{ background: 'transparent', border: 'none', color: 'var(--primary-blue)', marginTop: '20px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
-        >
-          {isRegister ? 'Already have an account? Log in' : "Don't have an account? Register"}
-        </button>
+        {mode !== 'reset' && (
+          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {mode === 'login' && (
+              <button onClick={() => setMode('forgot')} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px' }}>
+                Forgot Password?
+              </button>
+            )}
+            <button 
+              onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); setSuccess(''); }} 
+              style={{ background: 'transparent', border: 'none', color: 'var(--primary-blue)', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+            >
+              {mode === 'register' ? 'Already have an account? Log in' : "Don't have an account? Register"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

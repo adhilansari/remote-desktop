@@ -14,6 +14,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import authRouter, { verifyToken } from './auth';
 
 const app = express();
+app.set('trust proxy', 1); // Trust the AWS/Cloudflare load balancer IP
 
 // Security Headers
 app.use(helmet({

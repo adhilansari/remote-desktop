@@ -18,6 +18,12 @@ const db = new sqlite3.Database(dbPath, (err) => {
       password_hash TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+    db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      token TEXT NOT NULL,
+      expires_at DATETIME NOT NULL
+    )`);
   }
 });
 
