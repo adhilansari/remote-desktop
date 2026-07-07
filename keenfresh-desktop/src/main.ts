@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor, Menu, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, Notification, screen as electronScreen, powerMonitor, Menu, dialog, Tray, nativeImage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -21,6 +21,7 @@ let trustedDevicesPath = '';
 let canClose = false;
 
 let hiddenWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 let isLocked = false;
 
@@ -35,8 +36,6 @@ function showPrivacyOverlay() {
 function hidePrivacyOverlay() {
   // Disabled to prevent WebRTC capture from freezing on Windows
 }
-
-
 
 // Catch all unhandled errors silently so the app doesn't show default Electron error dialogs
 process.on('uncaughtException', (err) => {
@@ -60,7 +59,7 @@ function createHiddenWindow() {
     minWidth: 400,
     minHeight: 500,
     center: true,
-    show: true, // Set to false in production
+    show: !process.argv.includes('--hidden'), // Hide if started via Auto-Start
     autoHideMenuBar: true, // Hides the menu bar
     icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
@@ -78,10 +77,17 @@ function createHiddenWindow() {
     `);
   });
 
+  // When clicking close, just hide the window to tray if auto-start is true, unless we explicitly quit
   hiddenWindow.on('close', (e) => {
-    if (!canClose && currentHostPin && currentHostPin.length === 6) {
+    if (!canClose) {
       e.preventDefault();
-      hiddenWindow?.webContents.send('prompt-close-pin');
+      
+      // Check if user set a host PIN, if so they need to verify to actually close the connection entirely.
+      if (currentHostPin && currentHostPin.length === 6) {
+        hiddenWindow?.webContents.send('prompt-close-pin');
+      } else {
+        hiddenWindow?.hide();
+      }
       return;
     }
     hiddenWindow = null;
@@ -123,6 +129,22 @@ app.whenReady().then(() => {
 
   createHiddenWindow();
   
+  // Setup System Tray
+  const iconPath = path.join(__dirname, 'icon.png');
+  const trayIcon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(trayIcon);
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open KeenFresh', click: () => hiddenWindow?.show() },
+    { type: 'separator' },
+    { label: 'Quit', click: () => {
+        canClose = true;
+        app.quit();
+    }}
+  ]);
+  tray.setToolTip('KeenFresh Desktop');
+  tray.setContextMenu(contextMenu);
+  tray.on('double-click', () => hiddenWindow?.show());
+
   // Connection to relay is now deferred until the user logs in and sends the 'user-logged-in' IPC.
   // We don't automatically connect here anymore.
 

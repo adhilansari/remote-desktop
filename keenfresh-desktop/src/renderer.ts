@@ -456,7 +456,7 @@ function renderTrustedDevices(devices: { deviceId: string, deviceName: string, d
       if (deviceId) {
         // We prompt for host PIN to confirm removal for security
         const pin = prompt("Enter your 6-digit Host PIN to remove this device:");
-        const storedPin = localStorage.getItem('keenfresh_host_pin');
+        const storedPin = localStorage.getItem('host-pin');
         if (pin === storedPin) {
           ipcRenderer.send('remove-trusted-device', deviceId);
         } else if (pin) {

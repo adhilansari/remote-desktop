@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const dataDir = process.env.DATA_DIR || path.join(__dirname, '../../data');
+const dataDir = process.env.DATA_DIR || path.join(__dirname, '../data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
