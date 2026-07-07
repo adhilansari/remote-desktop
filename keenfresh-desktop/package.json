@@ -6,7 +6,7 @@
   "main": "dist/main.js",
   "scripts": {
     "clean": "node -e \"const fs=require('fs'); try { fs.rmSync('dist', {recursive:true, force:true, maxRetries: 5}); fs.rmSync('release', {recursive:true, force:true, maxRetries: 10, retryDelay: 500}); } catch(e) { console.log('Notice: Could not fully clean directories due to Windows file locks, continuing anyway...'); }\"",
-    "copy-assets": "node -e \"require('fs').copyFileSync('src/index.html', 'dist/index.html')\"",
+    "copy-assets": "node -e \"const fs=require('fs'); fs.copyFileSync('src/index.html', 'dist/index.html'); fs.copyFileSync('src/viewer.html', 'dist/viewer.html'); fs.copyFileSync('src/icon.png', 'dist/icon.png');\"",
     "build:tsc": "tsc",
     "build": "npm run clean && npm run build:tsc && npm run copy-assets",
     "start": "npm run build && electron .",

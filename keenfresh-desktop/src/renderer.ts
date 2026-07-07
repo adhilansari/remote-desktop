@@ -349,3 +349,223 @@ document.getElementById('reject-btn')?.addEventListener('click', () => {
   if (overlay) overlay.style.display = 'none';
   ipcRenderer.send('connection-response', { accepted: false });
 });
+
+// Security: PIN Masking Auto-Hide
+let pinHideTimeout: NodeJS.Timeout | null = null;
+const pinOverlay = document.getElementById('pin-blur-overlay');
+
+function hidePin() {
+  if (pinOverlay) {
+    pinOverlay.style.opacity = '1';
+    pinOverlay.style.pointerEvents = 'auto';
+  }
+}
+
+pinOverlay?.addEventListener('click', () => {
+  pinOverlay.style.opacity = '0';
+  pinOverlay.style.pointerEvents = 'none';
+  
+  if (pinHideTimeout) clearTimeout(pinHideTimeout);
+  pinHideTimeout = setTimeout(() => {
+    hidePin();
+  }, 60000); // Re-hide after 60 seconds
+});
+
+// Host PIN Logic
+const hostPinInput = document.getElementById('host-pin-input') as HTMLInputElement;
+const savePinBtn = document.getElementById('save-host-pin-btn');
+const pinStatus = document.getElementById('host-pin-status');
+
+// Load existing
+const savedPin = localStorage.getItem('host-pin');
+if (savedPin && hostPinInput) {
+  hostPinInput.value = savedPin;
+  ipcRenderer.send('set-host-pin', savedPin);
+}
+
+savePinBtn?.addEventListener('click', () => {
+  if (hostPinInput) {
+    const pin = hostPinInput.value.trim();
+    if (pin.length === 6) {
+      localStorage.setItem('host-pin', pin);
+      ipcRenderer.send('set-host-pin', pin);
+      if (pinStatus) {
+        pinStatus.style.display = 'block';
+        setTimeout(() => pinStatus.style.display = 'none', 3000);
+      }
+    } else {
+      alert("PIN must be exactly 6 digits.");
+    }
+  }
+});
+
+// Desktop-to-Desktop Viewer Logic
+const connectRemoteBtn = document.getElementById('connect-remote-btn');
+const remotePinInput = document.getElementById('remote-pin-input') as HTMLInputElement;
+const remoteHostPinInput = document.getElementById('remote-host-pin-input') as HTMLInputElement;
+
+connectRemoteBtn?.addEventListener('click', () => {
+  if (remotePinInput) {
+    const pin = remotePinInput.value.trim().toUpperCase();
+    if (pin.length === 9) {
+      const hostPin = remoteHostPinInput ? remoteHostPinInput.value.trim() : '';
+      ipcRenderer.send('open-remote-viewer', { pin, hostPin });
+    } else {
+      alert('Please enter a valid 9-digit pairing code (e.g. ABCD-1234).');
+    }
+  }
+});
+
+// Trusted Devices Logic
+const trustedDevicesList = document.getElementById('trusted-devices-list');
+
+function renderTrustedDevices(devices: { deviceId: string, deviceName: string, dateAdded: number }[]) {
+  if (!trustedDevicesList) return;
+  trustedDevicesList.innerHTML = '';
+  
+  if (devices.length === 0) {
+    trustedDevicesList.innerHTML = '<div style="color: #64748b; font-size: 13px; font-style: italic;">No trusted devices yet.</div>';
+    return;
+  }
+  
+  devices.forEach(device => {
+    const el = document.createElement('div');
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'space-between';
+    el.style.background = 'rgba(0,0,0,0.3)';
+    el.style.padding = '12px 15px';
+    el.style.borderRadius = '12px';
+    
+    const date = new Date(device.dateAdded).toLocaleDateString();
+    
+    el.innerHTML = `
+      <div>
+        <div style="color: white; font-weight: 600; font-size: 14px;">${device.deviceName}</div>
+        <div style="color: #64748b; font-size: 11px; margin-top: 2px;">Added on ${date}</div>
+      </div>
+      <button class="remove-trusted-btn" data-id="${device.deviceId}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;">Remove</button>
+    `;
+    trustedDevicesList.appendChild(el);
+  });
+
+  document.querySelectorAll('.remove-trusted-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const deviceId = target.getAttribute('data-id');
+      if (deviceId) {
+        // We prompt for host PIN to confirm removal for security
+        const pin = prompt("Enter your 6-digit Host PIN to remove this device:");
+        const storedPin = localStorage.getItem('keenfresh_host_pin');
+        if (pin === storedPin) {
+          ipcRenderer.send('remove-trusted-device', deviceId);
+        } else if (pin) {
+          alert("Incorrect Host PIN.");
+        }
+      }
+    });
+  });
+}
+
+ipcRenderer.on('trusted-devices-updated', (event, devices) => {
+  renderTrustedDevices(devices);
+});
+
+ipcRenderer.invoke('get-trusted-devices').then(devices => {
+  renderTrustedDevices(devices);
+});
+
+// App Close Security Overlay Logic
+const closeSecurityOverlay = document.getElementById('close-security-overlay');
+const closePinInput = document.getElementById('close-pin-input') as HTMLInputElement;
+const cancelCloseBtn = document.getElementById('cancel-close-btn');
+const confirmCloseBtn = document.getElementById('confirm-close-btn');
+const closePinErrorMsg = document.getElementById('close-pin-error-msg');
+
+ipcRenderer.on('prompt-close-pin', () => {
+  if (closeSecurityOverlay) closeSecurityOverlay.style.display = 'flex';
+  if (closePinInput) {
+    closePinInput.value = '';
+    closePinInput.focus();
+  }
+  if (closePinErrorMsg) closePinErrorMsg.style.display = 'none';
+});
+
+cancelCloseBtn?.addEventListener('click', () => {
+  if (closeSecurityOverlay) closeSecurityOverlay.style.display = 'none';
+});
+
+confirmCloseBtn?.addEventListener('click', () => {
+  if (closePinInput) {
+    ipcRenderer.send('confirm-close-pin', closePinInput.value);
+  }
+});
+
+ipcRenderer.on('close-pin-error', (event, msg) => {
+  if (closePinErrorMsg) {
+    closePinErrorMsg.innerText = msg;
+    closePinErrorMsg.style.display = 'block';
+  }
+});
+
+// Authentication UI Logic
+const authOverlay = document.getElementById('auth-overlay');
+const authEmail = document.getElementById('auth-email') as HTMLInputElement;
+const authPassword = document.getElementById('auth-password') as HTMLInputElement;
+const authError = document.getElementById('auth-error');
+const btnLogin = document.getElementById('btn-login');
+const btnRegister = document.getElementById('btn-register');
+
+let relayUrl = '';
+ipcRenderer.invoke('get-relay-url').then(url => {
+  relayUrl = url;
+});
+
+function checkAuth() {
+  const token = localStorage.getItem('keenfresh-jwt');
+  if (token) {
+    if (authOverlay) authOverlay.style.display = 'none';
+    ipcRenderer.send('user-logged-in', token);
+  }
+}
+
+checkAuth();
+
+async function handleAuthRequest(isRegister: boolean) {
+  if (!authEmail || !authPassword || !authError) return;
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    authError.innerText = 'Please enter both email and password';
+    authError.style.display = 'block';
+    return;
+  }
+
+  try {
+    const endpoint = isRegister ? '/auth/register' : '/auth/login';
+    const baseUrl = relayUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+    const res = await fetch(`${baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.token) {
+      localStorage.setItem('keenfresh-jwt', data.token);
+      localStorage.setItem('keenfresh-email', data.email);
+      authError.style.display = 'none';
+      checkAuth();
+    } else {
+      authError.innerText = data.error || 'Authentication failed';
+      authError.style.display = 'block';
+    }
+  } catch (e: any) {
+    authError.innerText = 'Network error connecting to relay';
+    authError.style.display = 'block';
+  }
+}
+
+btnLogin?.addEventListener('click', () => handleAuthRequest(false));
+btnRegister?.addEventListener('click', () => handleAuthRequest(true));

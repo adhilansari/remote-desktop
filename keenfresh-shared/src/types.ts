@@ -77,11 +77,13 @@ export interface RoomPayload {
   clientType: 'desktop' | 'mobile';
   hostname?: string;
   deviceName?: string;
+  hostPin?: string;
+  deviceId?: string;
 }
 
 export interface SignalPayload {
-  target: string;
-  signal: any;
+  type: string;
+  [key: string]: any;
 }
 
 export interface ServerToClientEvents {
@@ -89,7 +91,7 @@ export interface ServerToClientEvents {
   'room-error': (data: { message: string }) => void;
   'client-joined': (data: { clientId: string, clientType: string, hostname?: string }) => void;
   'client-left': (data: { clientId: string }) => void;
-  'connection-request': (data: { clientId: string, deviceName: string }) => void;
+  'connection-request': (data: { clientId: string, deviceName: string, hostPin?: string, deviceId?: string }) => void;
   'connection-rejected': (data: { reason: string }) => void;
   'connection-pending': (data: { message: string }) => void;
   'connection-accepted': (data: { room: string }) => void;
@@ -117,7 +119,7 @@ export interface ClientToServerEvents {
   'join-room': (data: RoomPayload) => void;
   'finalize-join': () => void;
   'connection-accepted': (data: { targetClientId: string }) => void;
-  'connection-rejected': (data: { targetClientId: string }) => void;
+  'connection-rejected': (data: { targetClientId: string, reason?: string }) => void;
   
   // WebRTC Signaling
   'webrtc-signal': (data: SignalPayload) => void;

@@ -8,8 +8,13 @@ import { handleSocketEvents } from './handlers/socketHandlers';
 import Redis from 'ioredis';
 import { createAdapter } from '@socket.io/redis-adapter';
 
+import authRouter, { verifyToken } from './auth';
+
 const app = express();
 app.use(cors());
+app.use(express.json()); // Parse JSON body
+
+app.use('/auth', authRouter); // Mount auth routes
 
 // Serve the compiled mobile web application directly from the Relay on Port 3000
 const webDistPath = path.join(__dirname, '../../keenfresh-web/dist');
@@ -42,6 +47,30 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Store active desktops by socket ID
+export const activeDesktops = new Map<string, { userId: number, email: string, deviceName: string, room: string, isLocked: boolean }>();
+
+app.get('/api/desktops', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+  const token = authHeader.split(' ')[1];
+  const decoded = verifyToken(token);
+  if (!decoded) return res.status(401).json({ error: 'Invalid token' });
+
+  const userDesktops: any[] = [];
+  activeDesktops.forEach((info, socketId) => {
+    if (info.userId === decoded.userId) {
+      userDesktops.push({
+        deviceId: socketId,
+        deviceName: info.deviceName,
+        room: info.room,
+        isLocked: info.isLocked
+      });
+    }
+  });
+  res.json(userDesktops);
+});
+
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -63,6 +92,13 @@ io.on('connection', (socket: Socket) => {
       const room = validatedData.pin || 'default-room';
       const role = validatedData.clientType;
 
+      // Extract token if provided
+      const token = socket.handshake.auth?.token;
+      let user = null;
+      if (token) {
+        user = verifyToken(token);
+      }
+
       if (role === 'desktop') {
         // Desktop joins immediately and creates the room
         socket.join(room);
@@ -70,6 +106,17 @@ io.on('connection', (socket: Socket) => {
         (socket as any).room = room;
         (socket as any).role = role;
         
+        if (user) {
+          activeDesktops.set(socket.id, {
+            userId: user.userId,
+            email: user.email,
+            deviceName: validatedData.hostname || 'My Computer',
+            room: room,
+            isLocked: false // Initially assumed false, can be updated via events later
+          });
+          console.log(`Desktop mapped to user ${user.email}`);
+        }
+
         const clientsInRoom = io.sockets.adapter.rooms.get(room);
         const clientIds = clientsInRoom ? Array.from(clientsInRoom) : [];
         
@@ -82,7 +129,11 @@ io.on('connection', (socket: Socket) => {
         (socket as any).pendingHostname = validatedData.hostname;
         
         const deviceName = validatedData.deviceName || 'Unknown Mobile Device';
-        socket.to(room).emit('connection-request', { clientId: socket.id, deviceName });
+        socket.to(room).emit('connection-request', { 
+          clientId: socket.id, 
+          deviceName,
+          hostPin: validatedData.hostPin
+        });
         socket.emit('connection-pending', { message: 'Waiting for desktop approval...' });
       }
 
@@ -96,8 +147,8 @@ io.on('connection', (socket: Socket) => {
     io.to(data.targetClientId).emit('connection-accepted', { room: (socket as any).room });
   });
 
-  socket.on('connection-rejected', (data: { targetClientId: string }) => {
-    io.to(data.targetClientId).emit('connection-rejected', { reason: 'Connection declined by desktop' });
+  socket.on('connection-rejected', (data: { targetClientId: string, reason?: string }) => {
+    io.to(data.targetClientId).emit('connection-rejected', { reason: data.reason || 'Connection declined by desktop' });
   });
 
   socket.on('finalize-join', () => {
@@ -122,6 +173,9 @@ io.on('connection', (socket: Socket) => {
     const room = (socket as any).room;
     if (room) {
       socket.to(room).emit('client-left', { clientId: socket.id });
+    }
+    if ((socket as any).role === 'desktop') {
+      activeDesktops.delete(socket.id);
     }
   });
 });

@@ -32,6 +32,7 @@ export const RoomJoinSchema = z.object({
   clientType: z.enum(['desktop', 'mobile']),
   hostname: z.string().optional(),
   deviceName: z.string().optional(),
+  hostPin: z.string().optional(),
 });
 
 // Since WebRTC SDPs and ICE candidates are complex objects handled by simple-peer / react-native-webrtc,

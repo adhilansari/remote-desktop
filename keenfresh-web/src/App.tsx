@@ -7,45 +7,107 @@ type ControlMode = 'trackpad' | 'direct';
 
 
 interface SavedDevice {
-  pin: string;
-  hostname: string;
+  deviceId: string;
+  deviceName: string;
+  room: string;
+  isLocked: boolean;
 }
 
-function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
+const RELAY_URL = import.meta.env.DEV ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
+
+function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
+  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!email || !password) return setError('Email and password required');
+    
+    try {
+      const endpoint = isRegister ? '/auth/register' : '/auth/login';
+      const res = await fetch(`${RELAY_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        onLogin(data.token);
+      } else {
+        setError(data.error || 'Authentication failed');
+      }
+    } catch (err) {
+      setError('Network error connecting to relay');
+    }
+  };
+
+  return (
+    <div className="gradient-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: '20px' }}>
+      <div className="glass-panel" style={{ padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+        <h1 className="text-gradient" style={{ fontSize: '32px', marginBottom: '10px' }}>KeenFresh</h1>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>{isRegister ? 'Create your account' : 'Sign in to access your devices'}</p>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input 
+            type="email" 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            placeholder="Email Address" 
+            className="glass-input" 
+            style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
+          />
+          <input 
+            type="password" 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            placeholder="Password" 
+            className="glass-input" 
+            style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
+          />
+          {error && <div style={{ color: '#ef4444', fontSize: '14px', textAlign: 'left' }}>{error}</div>}
+          <button type="submit" className="btn-primary" style={{ padding: '15px', borderRadius: '12px', fontSize: '16px', marginTop: '10px' }}>
+            {isRegister ? 'Register' : 'Log In'}
+          </button>
+        </form>
+        
+        <button 
+          onClick={() => setIsRegister(!isRegister)} 
+          style={{ background: 'transparent', border: 'none', color: 'var(--primary-blue)', marginTop: '20px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+        >
+          {isRegister ? 'Already have an account? Log in' : "Don't have an account? Register"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) => void, token: string, onLogout: () => void }) {
   const [savedDevices, setSavedDevices] = useState<SavedDevice[]>([]);
-  const [newPin, setNewPin] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    const devices = JSON.parse(localStorage.getItem('keenfresh_devices') || '[]');
-    setSavedDevices(devices);
-
-    const params = new URLSearchParams(window.location.search);
-    const pinParam = params.get('pin');
-    if (pinParam && pinParam.length === 9) {
-      setNewPin(pinParam);
-      setShowAddForm(true);
-      window.history.replaceState({}, '', '/');
-    }
-  }, []);
-
-  const handlePair = () => {
-    if (newPin.length === 9) {
-      // We don't know the hostname yet, it will be updated when connected
-      const newDevice = { pin: newPin, hostname: 'Unknown Desktop' };
-      const updated = [...savedDevices.filter(d => d.pin !== newPin), newDevice];
-      localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
-      localStorage.setItem('keenfresh_pin', newPin);
-      onConnect(newPin);
-    }
-  };
-
-  const removeDevice = (pinToRemove: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = savedDevices.filter(d => d.pin !== pinToRemove);
-    setSavedDevices(updated);
-    localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
-  };
+    const fetchDesktops = async () => {
+      try {
+        const res = await fetch(`${RELAY_URL}/api/desktops`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSavedDevices(data);
+        } else if (res.status === 401) {
+          onLogout();
+        }
+      } catch (e) {
+        console.error('Failed to fetch desktops');
+      }
+    };
+    
+    fetchDesktops();
+    const interval = setInterval(fetchDesktops, 5000); // Poll every 5 seconds for live status
+    return () => clearInterval(interval);
+  }, [token]);
 
   return (
     <div className="gradient-bg" style={{ overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -55,93 +117,71 @@ function Dashboard({ onConnect }: { onConnect: (pin: string) => void }) {
           <h2 style={{ fontSize: '18px', color: 'var(--text-main)', opacity: 0.8, fontWeight: 500 }}>Remote Desktop</h2>
         </div>
         
-        {savedDevices.length > 0 && (
+        {savedDevices.length > 0 ? (
           <div style={{ marginBottom: '40px' }}>
-            <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>Remote devices</h3>
+            <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>My Online Computers</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {savedDevices.map(device => (
                 <div 
-                  key={device.pin} 
+                  key={device.deviceId} 
                   className="glass-panel" 
-                  style={{ display: 'flex', alignItems: 'center', padding: '20px', cursor: 'pointer', borderRadius: '16px' }}
+                  style={{ display: 'flex', alignItems: 'center', padding: '20px', cursor: 'pointer', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.3)' }}
                   onClick={() => {
-                    localStorage.setItem('keenfresh_pin', device.pin);
-                    onConnect(device.pin);
+                    onConnect(device.room);
                   }}
                 >
                   <div style={{ background: 'var(--primary-blue)', borderRadius: '12px', padding: '12px', marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: '24px' }}>🖥️</span>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>{device.hostname}</div>
-                    <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Tap to connect</div>
+                    <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {device.deviceName}
+                      <span style={{ display: 'inline-block', width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', boxShadow: '0 0 8px #10b981' }}></span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{device.isLocked ? 'Locked • Tap to unlock' : 'Online • Tap to connect'}</div>
                   </div>
-                  <button 
-                    onClick={(e) => removeDevice(device.pin, e)}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer', padding: '8px' }}
-                  >
-                    🗑️
-                  </button>
                 </div>
               ))}
             </div>
           </div>
+        ) : (
+          <div style={{ marginBottom: '40px', textAlign: 'center', padding: '40px 20px', background: 'rgba(0,0,0,0.2)', borderRadius: '16px' }}>
+            <span style={{ fontSize: '40px', opacity: 0.5 }}>💤</span>
+            <h3 style={{ color: 'var(--text-main)', marginTop: '15px' }}>No computers online</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Make sure KeenFresh Desktop is running and you are logged into this account.</p>
+          </div>
         )}
 
-        <div>
-          <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>Set up another device for remote access</h3>
-          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-            <ol style={{ paddingLeft: '20px', color: 'var(--text-muted)', lineHeight: '1.8', margin: '0 0 24px 0', fontSize: '15px' }}>
-              <li style={{ marginBottom: '12px' }}>Go to the computer you want to remotely access (Windows 10+).</li>
-              <li style={{ marginBottom: '12px' }}>Download and run the <b>KeenFresh Desktop Host</b>.</li>
-              <li style={{ marginBottom: '12px' }}>Look for the 9-character pairing PIN on the desktop screen.</li>
-            </ol>
-            
-            {!showAddForm ? (
-              <button 
-                onClick={() => setShowAddForm(true)} 
-                className="btn-primary"
-                style={{ width: '100%', padding: '14px', fontSize: '16px', borderRadius: '12px' }}
-              >
-                Enter Access PIN
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: '12px', animation: 'fadeIn 0.3s ease' }}>
-                <input 
-                  type="text" 
-                  value={newPin} 
-                  onChange={e => {
-                    let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                    if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4, 8);
-                    setNewPin(val);
-                  }} 
-                  placeholder="ABCD-1234" 
-                  className="glass-input"
-                  style={{ flex: 1, fontSize: '20px', padding: '12px', textAlign: 'center', letterSpacing: '8px' }} 
-                  maxLength={9} 
-                />
-                <button 
-                  onClick={handlePair} 
-                  className="btn-primary"
-                  style={{ padding: '0 24px', fontSize: '16px', borderRadius: '12px' }}
-                >
-                  Connect
-                </button>
-              </div>
-            )}
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer' }}>
+            Sign Out
+          </button>
         </div>
+
       </div>
     </div>
   );
 }
 
 function App() {
+  const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('keenfresh-jwt'));
   const [pin, setPin] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
+
+  useEffect(() => {
+    let id = localStorage.getItem('keenfresh_device_id');
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('keenfresh_device_id', id);
+    }
+    setDeviceId(id);
+  }, []);
   const [streamActive, setStreamActive] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>('trackpad');
   const [activeModifiers, setActiveModifiers] = useState<string[]>([]);
+  const [hostPinPrompt, setHostPinPrompt] = useState(false);
+  const [hostPinInput, setHostPinInput] = useState('');
   const [showUI, setShowUI] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState('Establishing secure P2P connection');
@@ -326,16 +366,10 @@ function App() {
     socket.emit('join-room', { 
       pin, 
       clientType: 'mobile',
-      deviceName: getDeviceName() 
+      deviceName: getDeviceName(),
+      deviceId,
+      hostPin: localStorage.getItem('keenfresh_host_pin') || undefined
     });
-    });
-
-    socket.on('client-joined', (data: any) => {
-      if (data.clientType === 'desktop' && data.hostname) {
-        const devices = JSON.parse(localStorage.getItem('keenfresh_devices') || '[]');
-        const updated = devices.map((d: any) => d.pin === pin ? { ...d, hostname: data.hostname } : d);
-        localStorage.setItem('keenfresh_devices', JSON.stringify(updated));
-      }
     });
 
     socket.on('connection-pending', (data: any) => {
@@ -343,10 +377,15 @@ function App() {
     });
 
     socket.on('connection-rejected', (data: any) => {
-      alert(data.reason || "Connection rejected by desktop.");
-      setPin(null);
-      localStorage.removeItem('keenfresh_pin');
-      socket.disconnect();
+      if (data.reason === 'HOST_PIN_REQUIRED') {
+        setHostPinPrompt(true);
+        setConnectionMessage('Host PIN required to connect.');
+      } else {
+        alert(data.reason || "Connection rejected by desktop.");
+        setPin(null);
+        localStorage.removeItem('keenfresh_pin');
+        socket.disconnect();
+      }
     });
 
     socket.on('connection-accepted', () => {
@@ -443,6 +482,23 @@ function App() {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => console.error('ICE', e));
         }
       }
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          console.warn("WebRTC connection lost. Attempting to reconnect...");
+          setIsReconnecting(true);
+          // Socket.io should still be alive. Re-emit join-room to trigger a new offer from the host
+          socket.emit('join-room', { 
+            pin, 
+            clientType: 'mobile',
+            deviceName: 'Mobile (Reconnecting)',
+            deviceId,
+            hostPin: localStorage.getItem('keenfresh_host_pin') || undefined
+          });
+        } else if (pc.connectionState === 'connected') {
+          setIsReconnecting(false);
+        }
+      };
     });
 
     return () => {
@@ -936,7 +992,23 @@ function App() {
   if (!pin || (!connected && !streamActive)) {
     return (
       <>
-        <Dashboard onConnect={setPin} />
+        {!pin ? (
+          !authToken ? (
+            <AuthScreen onLogin={(token) => {
+              localStorage.setItem('keenfresh-jwt', token);
+              setAuthToken(token);
+            }} />
+          ) : (
+            <Dashboard 
+              token={authToken}
+              onConnect={setPin} 
+              onLogout={() => {
+                localStorage.removeItem('keenfresh-jwt');
+                setAuthToken(null);
+              }}
+            />
+          )
+        ) : null}
         {pwaInstallModal}
       </>
     );
@@ -983,6 +1055,80 @@ function App() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Host PIN Prompt Modal */}
+      {hostPinPrompt && !streamActive && (
+        <div className="gradient-bg" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', position: 'absolute', zIndex: 55 }}>
+          <div className="glass-panel" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '90%', textAlign: 'center', animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '50%', width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', boxShadow: '0 10px 20px rgba(16, 185, 129, 0.4)' }}>
+              <span style={{ fontSize: '32px' }}>🔒</span>
+            </div>
+            <h2 className="text-gradient" style={{ margin: '0 0 12px 0', fontSize: '26px' }}>Host PIN Required</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5', fontSize: '15px' }}>
+              This desktop requires a Host PIN for secure access.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+              <input 
+                type="password"
+                className="glass-input"
+                value={hostPinInput}
+                onChange={(e) => setHostPinInput(e.target.value)}
+                placeholder="6-Digit PIN"
+                maxLength={6}
+                style={{ padding: '16px', fontSize: '20px', textAlign: 'center', letterSpacing: '8px' }}
+              />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => {
+                    setHostPinPrompt(false);
+                    setPin(null);
+                    setConnected(false);
+                    socketRef.current?.disconnect();
+                  }}
+                  style={{ flex: 1, padding: '14px', borderRadius: '12px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn-primary"
+                  onClick={() => {
+                    if (hostPinInput.length === 6) {
+                      setHostPinPrompt(false);
+                      setConnectionMessage('Verifying Host PIN...');
+                      
+                      // Save host pin so future reconnects auto-accept
+                      localStorage.setItem('keenfresh_host_pin', hostPinInput);
+                      
+                      function getDeviceName() {
+                        const ua = navigator.userAgent;
+                        if (/iPad|iPhone|iPod/.test(ua)) return "iPhone/iPad";
+                        if (/Android/.test(ua)) return "Android Device";
+                        if (/Macintosh/.test(ua)) return "Mac";
+                        if (/Windows/.test(ua)) return "Windows PC";
+                        return "Trusted Device";
+                      }
+
+                      socketRef.current?.emit('join-room', { 
+                        pin, 
+                        clientType: 'mobile',
+                        deviceName: getDeviceName(),
+                        hostPin: hostPinInput,
+                        deviceId
+                      });
+                    } else {
+                      alert("PIN must be 6 digits");
+                    }
+                  }}
+                  style={{ flex: 1, padding: '14px', borderRadius: '12px' }}
+                >
+                  Verify PIN
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -399,6 +399,63 @@
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
+    /* Responsive Media Queries */
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 15px 20px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .logo-container {
+        margin-bottom: 0;
+        margin-right: auto;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo {
+        font-size: 24px;
+      }
+      .version-badge {
+        margin-top: 0;
+      }
+      .tab-btn {
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+      .tab-btn span {
+        display: none;
+      }
+      .content-area {
+        padding: 20px;
+      }
+      .card {
+        padding: 30px 20px;
+      }
+      #pairing-code {
+        font-size: 28px;
+        letter-spacing: 4px;
+      }
+      .remote-connect-inputs {
+        flex-direction: column;
+      }
+      #remote-host-pin-input {
+        width: 100% !important;
+      }
+      .sidebar-footer {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -418,8 +475,11 @@
       <button class="tab-btn" onclick="switchTab('guide')">
         <span style="font-size: 18px;">📖</span> User Manual
       </button>
-      <div style="flex:1"></div>
-      <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; margin-bottom: 10px;">
+      <button class="tab-btn" onclick="switchTab('security')">
+        <span style="font-size: 18px;">🔒</span> Security & Access
+      </button>
+      <div style="flex:1" class="sidebar-footer-spacer"></div>
+      <div class="sidebar-footer" style="text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; margin-bottom: 10px;">
         End-to-End Encrypted via WebRTC
       </div>
     </div>
@@ -431,11 +491,34 @@
           <h2>Ready to Connect</h2>
           <p>Scan the QR code with your mobile device or navigate to the URL provided below to take full control of your desktop.</p>
           
-          <div class="pin-container">
+          <div class="pin-container" id="pin-container" style="position: relative;">
+            <div id="pin-blur-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border-radius: 20px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.3s ease;">
+              <span style="font-size: 36px; margin-bottom: 10px;">👁️</span>
+              <span style="font-weight: 600; font-size: 16px; color: #cbd5e1;">Click to Reveal Connection Code</span>
+              <span style="font-size: 12px; color: #94a3b8; margin-top: 8px;">(Hidden for security in public spaces)</span>
+            </div>
+            
             <div class="pin-label">Secure Pairing Code</div>
             <div id="pairing-code">------</div>
             <div id="url-text">http://...</div>
             <canvas id="qr-canvas" width="180" height="180"></canvas>
+          </div>
+
+          <!-- NEW: Connect to Remote Desktop -->
+          <div class="card" style="margin-top: 20px;">
+            <h2 style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px; background: rgba(56,189,248,0.2); color: #38bdf8; padding: 8px; border-radius: 10px;">🖥️</span>
+              Control Remote Desktop
+            </h2>
+            <p>Enter the 9-digit pairing code of the desktop you want to control.</p>
+            
+            <div class="remote-connect-inputs" style="display: flex; gap: 10px; margin-top: 15px;">
+              <input type="text" id="remote-pin-input" placeholder="ABCD-1234" maxlength="9" style="flex: 1; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; color: white; font-size: 18px; text-align: center; letter-spacing: 4px; outline: none; text-transform: uppercase;">
+              <input type="password" id="remote-host-pin-input" placeholder="Host PIN (Optional)" maxlength="6" style="width: 150px; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; color: white; font-size: 14px; text-align: center; outline: none;">
+              <button id="connect-remote-btn" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9); border: none; padding: 0 25px; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                Connect
+              </button>
+            </div>
           </div>
 
           <div class="status-container" id="connection-status-container">
@@ -525,6 +608,33 @@
           </div>
         </div>
       </div>
+
+      <!-- SECURITY TAB -->
+      <div id="tab-security" class="tab-content home-layout">
+        <div class="card">
+          <h2>Host Security</h2>
+          <p>Set a secret PIN to protect this computer from unauthorized access when you are away from the keyboard.</p>
+          
+          <div style="background: rgba(0,0,0,0.3); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px; text-align: left;">
+            <label style="display: block; font-size: 13px; color: #94a3b8; font-weight: 600; margin-bottom: 10px;">Set 6-Digit Host PIN</label>
+            <input type="password" id="host-pin-input" maxlength="6" placeholder="------" style="width: 100%; background: rgba(15,23,42,0.8); border: 2px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; color: white; font-size: 24px; text-align: center; letter-spacing: 10px; margin-bottom: 15px; outline: none;">
+            
+            <button id="save-host-pin-btn" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+              Save Security PIN
+            </button>
+            <div id="host-pin-status" style="text-align: center; color: #34d399; font-size: 13px; margin-top: 10px; display: none;">PIN Saved Successfully!</div>
+          </div>
+          
+          <div style="background: rgba(15,23,42,0.6); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+            <h3 style="font-size: 16px; margin-top: 0; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">Trusted Devices</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px; line-height: 1.5;">Devices listed here can automatically connect to this desktop without requiring approval.</p>
+            <div id="trusted-devices-list" style="display: flex; flexDirection: column; gap: 10px;">
+              <!-- Devices will be injected here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -593,6 +703,49 @@
             Accept Access
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- App Close Security PIN Overlay -->
+    <div id="close-security-overlay" style="display: none; position: fixed; inset: 0; z-index: 20000; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); align-items: center; justify-content: center; flex-direction: column;">
+      <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 24px; padding: 40px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(239, 68, 68, 0.1);">
+        <div style="background: linear-gradient(135deg, #ef4444, #b91c1c); border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);">
+          <span style="font-size: 32px; color: white;">🛑</span>
+        </div>
+        <h2 style="color: white; font-size: 24px; font-weight: 700; margin: 0 0 10px 0;">Host Security PIN Required</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin: 0 0 25px 0; line-height: 1.5;">Enter the Host PIN to close KeenFresh Desktop and disable remote access.</p>
+        
+        <input type="password" id="close-pin-input" placeholder="------" maxlength="6" style="width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; color: white; font-size: 24px; letter-spacing: 10px; text-align: center; outline: none; margin-bottom: 20px;">
+        <p id="close-pin-error-msg" style="color: #ef4444; font-size: 13px; margin: -10px 0 15px 0; display: none;">Incorrect PIN</p>
+        
+        <div style="display: flex; gap: 15px;">
+          <button id="cancel-close-btn" style="flex: 1; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 12px; color: white; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+            Cancel
+          </button>
+          <button id="confirm-close-btn" style="flex: 1; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; border-radius: 12px; color: white; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+            Close App
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" style="display: flex; position: fixed; inset: 0; z-index: 30000; background: rgba(9, 13, 20, 0.98); backdrop-filter: blur(30px); align-items: center; justify-content: center; flex-direction: column;">
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 30px; padding: 50px 40px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);">
+        <h2 style="margin: 0 0 10px 0; font-size: 32px; background: linear-gradient(135deg, #38bdf8, #818cf8, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">KeenFresh</h2>
+        <p style="color: #94a3b8; font-size: 15px; margin-bottom: 30px;">Sign in to sync and secure your devices.</p>
+        
+        <input type="email" id="auth-email" placeholder="Email Address" style="width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 16px; color: white; font-size: 16px; outline: none; margin-bottom: 15px; transition: border-color 0.2s;">
+        <input type="password" id="auth-password" placeholder="Password" style="width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 16px; color: white; font-size: 16px; outline: none; margin-bottom: 25px; transition: border-color 0.2s;">
+        
+        <p id="auth-error" style="color: #ef4444; font-size: 14px; margin: -10px 0 15px 0; display: none;">Error message here</p>
+
+        <button id="btn-login" style="width: 100%; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border: none; padding: 16px; border-radius: 14px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2); margin-bottom: 15px;">
+          Log In
+        </button>
+        <button id="btn-register" style="width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: 14px; color: #cbd5e1; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+          Create an Account
+        </button>
       </div>
     </div>
 

@@ -9,6 +9,16 @@ import { screen, mouse } from '@nut-tree-fork/nut-js';
 import { exec } from 'child_process';
 
 let globalPin = '';
+let currentHostPin = '';
+
+interface TrustedDevice {
+  deviceId: string;
+  deviceName: string;
+  dateAdded: number;
+}
+let trustedDevices: TrustedDevice[] = [];
+let trustedDevicesPath = '';
+let canClose = false;
 
 let hiddenWindow: BrowserWindow | null = null;
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
@@ -45,13 +55,14 @@ function createHiddenWindow() {
   Menu.setApplicationMenu(null); // Remove default File/Edit/View menu
 
   hiddenWindow = new BrowserWindow({
-    width: 850,
-    height: 600,
-    minWidth: 850,
-    minHeight: 600,
+    width: 900,
+    height: 650,
+    minWidth: 400,
+    minHeight: 500,
     center: true,
     show: true, // Set to false in production
     autoHideMenuBar: true, // Hides the menu bar
+    icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -67,7 +78,12 @@ function createHiddenWindow() {
     `);
   });
 
-  hiddenWindow.on('closed', () => {
+  hiddenWindow.on('close', (e) => {
+    if (!canClose && currentHostPin && currentHostPin.length === 6) {
+      e.preventDefault();
+      hiddenWindow?.webContents.send('prompt-close-pin');
+      return;
+    }
     hiddenWindow = null;
   });
 }
@@ -98,11 +114,17 @@ app.whenReady().then(() => {
     globalPin = generateSecurePin();
   }
 
+  trustedDevicesPath = path.join(app.getPath('userData'), 'trusted_devices.json');
+  try {
+    if (fs.existsSync(trustedDevicesPath)) {
+      trustedDevices = JSON.parse(fs.readFileSync(trustedDevicesPath, 'utf8'));
+    }
+  } catch (err) {}
+
   createHiddenWindow();
   
-  hiddenWindow?.webContents.on('did-finish-load', () => {
-    connectToRelay();
-  });
+  // Connection to relay is now deferred until the user logs in and sends the 'user-logged-in' IPC.
+  // We don't automatically connect here anymore.
 
   powerMonitor.on('lock-screen', () => {
     isLocked = true;
@@ -116,15 +138,66 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createHiddenWindow();
-      hiddenWindow?.webContents.on('did-finish-load', () => {
-        connectToRelay();
-      });
     }
   });
 
   // Handle IPC for pairing code
   ipcMain.handle('get-pairing-code', () => {
     return globalPin;
+  });
+  
+  ipcMain.on('set-host-pin', (event, pin) => {
+    currentHostPin = pin;
+    console.log('Host PIN updated via IPC');
+  });
+
+  ipcMain.handle('get-relay-url', () => RELAY_SERVER_URL);
+
+  ipcMain.on('user-logged-in', (event, token) => {
+    connectToRelay(token);
+  });
+
+  ipcMain.handle('get-trusted-devices', () => {
+    return trustedDevices;
+  });
+
+  ipcMain.on('remove-trusted-device', (event, deviceId) => {
+    trustedDevices = trustedDevices.filter(d => d.deviceId !== deviceId);
+    fs.writeFileSync(trustedDevicesPath, JSON.stringify(trustedDevices));
+    hiddenWindow?.webContents.send('trusted-devices-updated', trustedDevices);
+  });
+
+  ipcMain.on('confirm-close-pin', (event, pin) => {
+    if (pin === currentHostPin) {
+      canClose = true;
+      app.quit();
+    } else {
+      hiddenWindow?.webContents.send('close-pin-error', 'Incorrect PIN');
+    }
+  });
+
+  // Desktop-to-Desktop Viewer Window
+  ipcMain.on('open-remote-viewer', (event, { pin, hostPin }) => {
+    const viewerWindow = new BrowserWindow({
+      width: 1280,
+      height: 720,
+      minWidth: 400,
+      minHeight: 500,
+      title: 'KeenFresh Remote Viewer',
+      autoHideMenuBar: true,
+      icon: path.join(__dirname, 'icon.png'),
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    });
+
+    // Pass the connection details to the viewer via query params
+    const viewerUrl = new URL('file://' + path.join(__dirname, 'viewer.html'));
+    viewerUrl.searchParams.set('pin', pin);
+    if (hostPin) viewerUrl.searchParams.set('hostPin', hostPin);
+
+    viewerWindow.loadURL(viewerUrl.toString());
   });
 
 });
@@ -135,12 +208,16 @@ app.on('window-all-closed', () => {
   }
 });
 
-const RELAY_SERVER_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'wss://relay.keenfresh.com';
+const RELAY_SERVER_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
 
-function connectToRelay() {
+function connectToRelay(jwtToken: string) {
+  if (socket) {
+    socket.disconnect();
+  }
+
   // Desktop is trusted internally, bypass token by passing role early
   socket = io(RELAY_SERVER_URL, {
-    auth: { clientType: 'desktop' },
+    auth: { clientType: 'desktop', token: jwtToken },
     transports: ['websocket']
   });
   
@@ -167,6 +244,40 @@ function connectToRelay() {
   socket.on('connection-request', (data) => {
     console.log('Incoming connection request:', data);
     
+    // Security: Check Trusted Devices first
+    if (data.deviceId && trustedDevices.some(d => d.deviceId === data.deviceId)) {
+      console.log('Trusted device recognized. Auto-accepting connection.');
+      socket?.emit('connection-accepted', { targetClientId: data.clientId });
+      return;
+    }
+
+    // Security: Verify Host PIN if one is configured
+    if (currentHostPin && currentHostPin.length === 6) {
+      if (data.hostPin === currentHostPin) {
+        console.log('Host PIN verified. Auto-accepting connection.');
+        
+        // Add to trusted devices for future
+        if (data.deviceId) {
+          if (!trustedDevices.some(d => d.deviceId === data.deviceId)) {
+            trustedDevices.push({
+              deviceId: data.deviceId,
+              deviceName: data.deviceName || 'Unknown Device',
+              dateAdded: Date.now()
+            });
+            fs.writeFileSync(trustedDevicesPath, JSON.stringify(trustedDevices));
+            hiddenWindow?.webContents.send('trusted-devices-updated', trustedDevices);
+          }
+        }
+        
+        socket?.emit('connection-accepted', { targetClientId: data.clientId });
+        return; // Bypass manual approval
+      } else {
+        console.log('Host PIN incorrect or missing. Auto-rejecting connection.');
+        socket?.emit('connection-rejected', { targetClientId: data.clientId, reason: 'HOST_PIN_REQUIRED' });
+        return; // Bypass manual approval
+      }
+    }
+
     // Launch Privacy Screen Overlay immediately so they can't peek while waiting
     showPrivacyOverlay();
 
