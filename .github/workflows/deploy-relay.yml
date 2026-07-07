@@ -24,9 +24,10 @@ jobs:
             cd keenfresh
             git reset --hard
             git pull origin main
-            sudo docker compose down
+            sudo docker compose down || true
+            sudo systemctl restart docker
+            sleep 3
             sudo docker system prune -f
-            sleep 2
             sudo lsof -ti:3000 | xargs sudo kill -9 || true
             sudo fuser -k 3000/tcp || true
             sudo docker compose up -d --build
