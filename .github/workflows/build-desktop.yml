@@ -1,106 +1,48 @@
-name: Build Desktop Release
+name: Build Desktop App
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ "main" ]
+    paths:
+      - 'keenfresh-desktop/**'
+      - 'keenfresh-shared/**'
+  workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build & Release on Windows
+  build:
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install Shared Dependencies
-        working-directory: keenfresh-shared
-        run: npm install
+      - name: Install dependencies (shared)
+        working-directory: ./keenfresh-shared
+        run: npm ci
 
-      - name: Build Shared Package
-        working-directory: keenfresh-shared
+      - name: Build shared library
+        working-directory: ./keenfresh-shared
         run: npm run build
 
-      - name: Install Desktop Dependencies
-        working-directory: keenfresh-desktop
-        run: npm install
+      - name: Install dependencies (desktop)
+        working-directory: ./keenfresh-desktop
+        run: npm ci
 
-      - name: Build and Publish Executable to GitHub (Windows)
-        working-directory: keenfresh-desktop
+      - name: Build and Pack Desktop App
+        working-directory: ./keenfresh-desktop
+        run: npm run pack:win
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release:win
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-mac:
-    name: Build & Release on Mac
-    runs-on: macos-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-
-      - name: Install Shared Dependencies
-        working-directory: keenfresh-shared
-        run: npm install
-
-      - name: Build Shared Package
-        working-directory: keenfresh-shared
-        run: npm run build
-
-      - name: Install Desktop Dependencies
-        working-directory: keenfresh-desktop
-        run: npm install
-
-      - name: Build and Publish Executable to GitHub (Mac)
-        working-directory: keenfresh-desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release:mac
-
-  build-linux:
-    name: Build & Release on Linux
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Shared Dependencies
-        working-directory: keenfresh-shared
-        run: npm install
-
-      - name: Build Shared Package
-        working-directory: keenfresh-shared
-        run: npm run build
-
-      - name: Install Desktop Dependencies
-        working-directory: keenfresh-desktop
-        run: npm install
-
-      - name: Build and Publish Executable to GitHub (Linux)
-        working-directory: keenfresh-desktop
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run release:linux
+          name: KeenFresh-Windows-Installer
+          path: keenfresh-desktop/release/*.exe
+          retention-days: 7

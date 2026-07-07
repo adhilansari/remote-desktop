@@ -569,3 +569,17 @@ async function handleAuthRequest(isRegister: boolean) {
 
 btnLogin?.addEventListener('click', () => handleAuthRequest(false));
 btnRegister?.addEventListener('click', () => handleAuthRequest(true));
+
+// Auto-Start System Logic
+const autostartToggle = document.getElementById('autostart-toggle') as HTMLInputElement;
+if (autostartToggle) {
+  ipcRenderer.invoke('get-autostart-status').then((isEnabled: boolean) => {
+    autostartToggle.checked = isEnabled;
+    autostartToggle.style.background = isEnabled ? '#10b981' : 'rgba(0,0,0,0.5)';
+  });
+
+  autostartToggle.addEventListener('change', (e) => {
+    const isEnabled = (e.target as HTMLInputElement).checked;
+    ipcRenderer.send('set-autostart', isEnabled);
+  });
+}

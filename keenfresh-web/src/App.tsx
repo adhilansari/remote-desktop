@@ -86,6 +86,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
 
 function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) => void, token: string, onLogout: () => void }) {
   const [savedDevices, setSavedDevices] = useState<SavedDevice[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
     const fetchDesktops = async () => {
@@ -101,6 +102,8 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
         }
       } catch (e) {
         console.error('Failed to fetch desktops');
+      } finally {
+        setIsFetching(false);
       }
     };
     
@@ -117,7 +120,13 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
           <h2 style={{ fontSize: '18px', color: 'var(--text-main)', opacity: 0.8, fontWeight: 500 }}>Remote Desktop</h2>
         </div>
         
-        {savedDevices.length > 0 ? (
+        {isFetching ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
+            <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(56,189,248,0.2)', borderTop: '4px solid #38bdf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            <p style={{ color: 'var(--text-muted)', marginTop: '20px' }}>Locating your devices...</p>
+          </div>
+        ) : savedDevices.length > 0 ? (
           <div style={{ marginBottom: '40px' }}>
             <h3 style={{ fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', fontWeight: 600 }}>My Online Computers</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

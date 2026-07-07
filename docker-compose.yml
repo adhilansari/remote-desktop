@@ -2,11 +2,21 @@ version: '3.8'
 
 services:
   relay:
-    build: .
+    build:
+      context: .
+      dockerfile: keenfresh-relay/Dockerfile
     container_name: keenfresh-relay
     ports:
       - "3000:3000"
+    restart: always
+    volumes:
+      - keenfresh-data:/usr/src/app/keenfresh-relay/data
     environment:
       - NODE_ENV=production
       - PORT=3000
-    restart: always
+      - JWT_SECRET=${JWT_SECRET:-super_secret_keenfresh_key_change_in_prod}
+    # To run behind a reverse proxy like Nginx or Cloudflare, ensure 3000 is open locally
+
+volumes:
+  keenfresh-data:
+    description: "Volume for SQLite database persistence"

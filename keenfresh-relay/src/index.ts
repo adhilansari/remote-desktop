@@ -3,6 +3,9 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { ClientToServerEvents, ServerToClientEvents, RoomPayload, RoomJoinSchema } from 'keenfresh-shared';
 import { handleSocketEvents } from './handlers/socketHandlers';
 import Redis from 'ioredis';
@@ -11,10 +14,26 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import authRouter, { verifyToken } from './auth';
 
 const app = express();
+
+// Security Headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled to allow the web app to render properly if needed
+}));
+
+// Request Logging
+app.use(morgan('combined'));
+
 app.use(cors());
 app.use(express.json()); // Parse JSON body
 
-app.use('/auth', authRouter); // Mount auth routes
+// Rate Limiting for Auth
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 requests per window
+  message: { error: 'Too many login attempts, please try again later.' }
+});
+
+app.use('/auth', authLimiter, authRouter); // Mount auth routes with limiter
 
 // Serve the compiled mobile web application directly from the Relay on Port 3000
 const webDistPath = path.join(__dirname, '../../keenfresh-web/dist');

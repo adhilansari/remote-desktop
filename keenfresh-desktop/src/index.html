@@ -625,10 +625,24 @@
             <div id="host-pin-status" style="text-align: center; color: #34d399; font-size: 13px; margin-top: 10px; display: none;">PIN Saved Successfully!</div>
           </div>
           
+          <div style="background: rgba(15,23,42,0.6); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+              <h3 style="font-size: 16px; margin: 0; color: #e2e8f0;">System Auto-Start</h3>
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="autostart-toggle" style="appearance: none; width: 44px; height: 24px; background: rgba(0,0,0,0.5); border-radius: 24px; position: relative; cursor: pointer; outline: none; border: 2px solid rgba(255,255,255,0.1); transition: 0.3s;" onchange="this.style.background = this.checked ? '#10b981' : 'rgba(0,0,0,0.5)'">
+                <style>
+                  #autostart-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
+                  #autostart-toggle:checked::after { transform: translateX(20px); }
+                </style>
+              </label>
+            </div>
+            <p style="font-size: 13px; color: #94a3b8; margin: 0; line-height: 1.5;">Automatically start KeenFresh silently in the background when Windows boots up.</p>
+          </div>
+
           <div style="background: rgba(15,23,42,0.6); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
             <h3 style="font-size: 16px; margin-top: 0; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">Trusted Devices</h3>
             <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px; line-height: 1.5;">Devices listed here can automatically connect to this desktop without requiring approval.</p>
-            <div id="trusted-devices-list" style="display: flex; flexDirection: column; gap: 10px;">
+            <div id="trusted-devices-list" style="display: flex; flex-direction: column; gap: 10px;">
               <!-- Devices will be injected here -->
             </div>
           </div>

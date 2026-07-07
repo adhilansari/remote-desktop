@@ -1,0 +1,26 @@
+name: Deploy Relay Server to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'keenfresh-relay/**'
+      - 'keenfresh-shared/**'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd keenfresh
+            git pull origin main
+            sudo docker-compose up -d --build

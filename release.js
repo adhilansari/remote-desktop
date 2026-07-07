@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// The projects to build
 const projects = [
+  '.',
   'keenfresh-shared',
   'keenfresh-relay',
   'keenfresh-desktop',

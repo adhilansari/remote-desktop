@@ -446,6 +446,21 @@ function connectToRelay(jwtToken: string) {
     console.log('[RENDERER LOG]:', msg);
   });
 
+  // Auto-Start System Integration
+  ipcMain.handle('get-autostart-status', () => {
+    const settings = app.getLoginItemSettings();
+    return settings.openAtLogin;
+  });
+
+  ipcMain.on('set-autostart', (event, isEnabled: boolean) => {
+    app.setLoginItemSettings({
+      openAtLogin: isEnabled,
+      path: app.getPath('exe'),
+      args: ['--hidden'] // Start hidden if possible
+    });
+    console.log(`Auto-Start set to: ${isEnabled}`);
+  });
+
   // Desktop Capturer IPC
   ipcMain.handle('get-desktop-sources', async () => {
     const sources = await desktopCapturer.getSources({ types: ['screen'] });

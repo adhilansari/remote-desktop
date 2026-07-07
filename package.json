@@ -1,0 +1,22 @@
+{
+  "name": "keenfresh-workspace",
+  "version": "1.8.39",
+  "private": true,
+  "description": "KeenFresh Root Workspace",
+  "workspaces": [
+    "keenfresh-shared",
+    "keenfresh-relay",
+    "keenfresh-web",
+    "keenfresh-desktop"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w keenfresh-relay\" \"npm run dev -w keenfresh-web\"",
+    "start": "concurrently \"npm start -w keenfresh-relay\" \"npm start -w keenfresh-desktop\"",
+    "build": "npm run build -w keenfresh-shared && npm run build -w keenfresh-relay && npm run build -w keenfresh-web && npm run build -w keenfresh-desktop",
+    "pack:win": "npm run pack:win -w keenfresh-desktop",
+    "release": "node release.js"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
