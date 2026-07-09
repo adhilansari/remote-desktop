@@ -191,11 +191,27 @@ io.on('connection', (socket: Socket) => {
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
     const room = (socket as any).room;
+    const role = (socket as any).role;
+    
     if (room) {
       socket.to(room).emit('client-left', { clientId: socket.id });
-    }
-    if ((socket as any).role === 'desktop') {
-      activeDesktops.delete(socket.id);
+      
+      if (role === 'desktop') {
+        // If the desktop host disconnects, notify all mobile clients and close the room
+        socket.to(room).emit('host-disconnected', { message: 'Desktop host went offline' });
+        activeDesktops.delete(socket.id);
+        
+        // Force all sockets in the room to leave
+        const clientsInRoom = io.sockets.adapter.rooms.get(room);
+        if (clientsInRoom) {
+          for (const clientId of clientsInRoom) {
+            const clientSocket = io.sockets.sockets.get(clientId);
+            if (clientSocket) {
+              clientSocket.leave(room);
+            }
+          }
+        }
+      }
     }
   });
 });
