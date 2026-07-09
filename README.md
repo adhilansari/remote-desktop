@@ -7,6 +7,29 @@ KeenFresh is an advanced, ultra-low latency remote desktop control application b
 
 **🎉 Version 1.8.50 has been officially declared as a Long Term Support (LTS) release!**
 
+---
+
+## 📥 Download the Latest Release
+
+> [!TIP]
+> **[⬇️ Download KeenFresh Setup v1.8.50 (Windows .exe)](https://github.com/adhilansari/remote-desktop/releases/download/v1.8.50/KeenFresh-Setup-1.8.50.exe)**
+
+---
+
+## 🎯 What Problem Does KeenFresh Solve?
+
+Legacy remote desktop solutions like TeamViewer, AnyDesk, and Google Remote Desktop suffer from bloatware, commercial licensing popups, high latency over poor networks, and a terrible mobile-to-desktop user experience. 
+
+**KeenFresh** solves these problems by providing an ultra-lean, WebRTC-powered remote desktop architecture that works directly inside your mobile web browser. No client-side installation is required on your phone! It maps your phone screen to your computer screen pixel-for-pixel with zero latency, providing an intelligent "virtual trackpad" experience that feels like you're using a native laptop.
+
+## 💼 Real World Use Cases
+
+1. **The Remote Professional**: Leave your heavy workstation at the office. Connect to it securely from your iPad while sitting at a coffee shop. Swap monitors and run demanding CAD or video editing software.
+2. **Instant IT Support**: Provide a client with the KeenFresh Desktop App. They don't need to create an account—they just read you the 9-digit Secure Pairing Code. You connect instantly from your browser to fix their issue.
+3. **Home Media Server Management**: Install KeenFresh on your headless home server or Raspberry Pi. When you need to adjust a setting, simply pull out your phone, tap the server in your "My Computers" list, and make the change from the couch.
+
+---
+
 ## 🏗 Global Matchmaking Architecture
 
 KeenFresh consists of three primary components that communicate via a global matchmaking architecture:
