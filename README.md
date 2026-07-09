@@ -3,6 +3,8 @@
 ![Version](https://img.shields.io/badge/version-1.8.50%20LTS-blue.svg)
 ![Status](https://img.shields.io/badge/status-Long_Term_Support-success.svg)
 
+🌐 **Website:** [www.keenfresh.com](https://www.keenfresh.com)
+
 KeenFresh is an advanced, ultra-low latency remote desktop control application built using WebRTC, React, and Electron. It allows users to control their desktop PC seamlessly from their mobile device with pixel-perfect touch mapping, gesture support, and dynamic zoom features.
 
 **🎉 Version 1.8.50 has been officially declared as a Long Term Support (LTS) release!**

@@ -1,4 +1,4 @@
-import { Download, Smartphone, ShieldCheck, Coffee, Ghost, Cpu, Server, Globe, ArrowRight } from 'lucide-react';
+import { Download, Smartphone, ShieldCheck, Layers, Server, Globe, ArrowRight, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function App() {
@@ -6,9 +6,7 @@ function App() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.15
-      }
+      transition: { staggerChildren: 0.15 }
     }
   };
 
@@ -23,7 +21,6 @@ function App() {
       <div className="bg-glow secondary"></div>
       
       <div className="container">
-        
         {/* Navbar */}
         <motion.nav 
           initial={{ y: -20, opacity: 0 }}
@@ -37,7 +34,7 @@ function App() {
           </div>
           <div>
             <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary small">
-              <Download size={16} /> Get App
+              <Download size={16} /> Get Client
             </a>
           </div>
         </motion.nav>
@@ -50,21 +47,21 @@ function App() {
           className="hero"
         >
           <motion.div variants={fadeInUp} className="hero-tag">
-            <span className="sparkle">✨</span> Stop Pretending to Work at Your Desk
+            <span className="sparkle">✨</span> Next-Generation Remote Access
           </motion.div>
           <motion.h1 variants={fadeInUp}>
-            Unchain Yourself <br /><span className="gradient-text">From the Keyboard</span>
+            Control Your Workspace <br /><span className="gradient-text">From Anywhere.</span>
           </motion.h1>
           <motion.p variants={fadeInUp}>
-            Whether you are waiting for an absurdly long video render, pretending to be active on Slack, or just running a code compilation that takes longer than a Lord of the Rings movie—KeenFresh puts your entire PC in your pocket so you can finally go make a sandwich.
+            Experience zero-latency, WebRTC-powered remote desktop architecture. Control your PC securely from any mobile browser with pixel-perfect accuracy—no mobile application installation required.
           </motion.p>
           <motion.div variants={fadeInUp} className="hero-actions">
             <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary large group">
               <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
-              View Releases on GitHub
+              Download LTS Release
             </a>
-            <a href="#features" className="btn-secondary">
-              See How It Works <ArrowRight size={18} />
+            <a href="#architecture" className="btn-secondary">
+              Explore Architecture <ArrowRight size={18} />
             </a>
           </motion.div>
           
@@ -79,46 +76,46 @@ function App() {
                 <div className="dots"><span></span><span></span><span></span></div>
                 <div className="url-bar">app.keenfresh.com</div>
               </div>
-              <div className="mockup-body">
+              <div className="mockup-body" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <div className="screen-content">
-                  <div className="stream-overlay">Live 60FPS WebRTC Stream</div>
+                  <div className="stream-overlay" style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.6)' }}>Live 60FPS WebRTC Stream</div>
                 </div>
               </div>
             </div>
           </motion.div>
         </motion.header>
 
-        {/* The Problem (Pain Points) */}
+        {/* Use Cases */}
         <motion.div 
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
           className="section"
-          id="features"
+          id="architecture"
         >
-          <motion.h2 variants={fadeInUp} className="section-title">The "I Can't Leave My Desk" Support Group</motion.h2>
+          <motion.h2 variants={fadeInUp} className="section-title">Engineered for Professional Workflows</motion.h2>
           <div className="grid">
             <motion.div variants={fadeInUp} className="card interactive">
-              <div className="card-icon red">
-                <Cpu size={24} />
+              <div className="card-icon blue">
+                <Activity size={24} />
               </div>
-              <h3>The "Compiling" Excuse</h3>
-              <p>Your code is building. You want to lie on the couch, but what if it fails after 15 minutes and needs a single key press? KeenFresh lets you monitor the build from your sofa.</p>
+              <h3>Process Monitoring</h3>
+              <p>Monitor complex data pipelines, lengthy code compilations, or high-fidelity video renders directly from your tablet or mobile device without remaining tethered to your desk.</p>
             </motion.div>
             <motion.div variants={fadeInUp} className="card interactive">
-              <div className="card-icon amber">
-                <Coffee size={24} />
+              <div className="card-icon cyan">
+                <ShieldCheck size={24} />
               </div>
-              <h3>The Coffee Run Anxiety</h3>
-              <p>You step away to grab coffee, terrified that your boss just sent an urgent message. With KeenFresh, your desktop screen is right on your phone. Problem solved.</p>
+              <h3>Instant IT Administration</h3>
+              <p>Provide immediate technical support by connecting to any authenticated KeenFresh host via a 9-digit secure pairing code. No account creation required for clients.</p>
             </motion.div>
             <motion.div variants={fadeInUp} className="card interactive">
               <div className="card-icon purple">
-                <Ghost size={24} />
+                <Server size={24} />
               </div>
-              <h3>The Ghost Worker</h3>
-              <p>We won't tell anyone if you're using KeenFresh to jiggle your mouse from the bathroom so your Teams status stays "Available." We just build the tools.</p>
+              <h3>Server & Media Management</h3>
+              <p>Manage headless servers, homelabs, or local media centers from the comfort of your living room using KeenFresh's intelligent virtual trackpad interface.</p>
             </motion.div>
           </div>
         </motion.div>
@@ -130,9 +127,10 @@ function App() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="highlight-section glow-border"
+          style={{ backgroundImage: 'linear-gradient(rgba(3,3,5,0.8), rgba(3,3,5,0.9)), url(https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
-          <h2>Your PC, Now in Your Pocket.</h2>
-          <p>Traditional remote apps are clunky, require you to install bloatware on your phone, and need a PhD in port-forwarding to set up. KeenFresh is just a beautifully simple Windows app. Scan a QR code, and your phone's browser becomes a secure, low-latency magic wand.</p>
+          <h2>A Modern Approach to Remote Desktop.</h2>
+          <p>Traditional remote applications are burdened by commercial bloatware and complex network configurations. KeenFresh offers a lightweight, open-source architecture that maps your mobile screen to your desktop monitor pixel-for-pixel with zero latency.</p>
         </motion.section>
 
         {/* Features */}
@@ -143,28 +141,28 @@ function App() {
           variants={staggerContainer}
           className="section"
         >
-          <motion.h2 variants={fadeInUp} className="section-title">Why KeenFresh is Actually Good</motion.h2>
+          <motion.h2 variants={fadeInUp} className="section-title">Enterprise-Grade Architecture</motion.h2>
           <div className="grid">
             <motion.div variants={fadeInUp} className="card interactive hover-blue">
               <div className="card-icon blue">
                 <Smartphone size={24} />
               </div>
-              <h3>No Mobile App Required</h3>
-              <p>Don't clutter your phone. Just go to <strong>app.keenfresh.com</strong>, scan the QR code on your PC, and boom—you have a 60FPS stream and a full trackpad.</p>
+              <h3>Zero-Install Mobile Client</h3>
+              <p>Connect seamlessly through <strong>app.keenfresh.com</strong>. No mobile app installations or updates required—just a lightning-fast browser experience.</p>
             </motion.div>
             <motion.div variants={fadeInUp} className="card interactive hover-green">
               <div className="card-icon green">
                 <Globe size={24} />
               </div>
-              <h3>Global Magic Relay</h3>
-              <p>No need to mess with your router. KeenFresh uses a globally distributed AWS & Cloudflare architecture to magically connect you from anywhere on Earth.</p>
+              <h3>Global Matchmaking Relay</h3>
+              <p>Avoid complex firewall configurations. KeenFresh utilizes an optimized WebRTC signaling server to establish direct peer-to-peer tunnels worldwide.</p>
             </motion.div>
             <motion.div variants={fadeInUp} className="card interactive hover-blue">
               <div className="card-icon cyan">
                 <ShieldCheck size={24} />
               </div>
-              <h3>Fort Knox Security</h3>
-              <p>Your connection is secured via WebRTC. End-to-end encrypted signaling means not even we can see what you are doing. Your secrets are safe.</p>
+              <h3>End-to-End Encryption</h3>
+              <p>All video and peripheral data is transmitted over secure DTLS/SRTP WebRTC protocols, ensuring your workstation remains impenetrable.</p>
             </motion.div>
           </div>
         </motion.div>
@@ -177,15 +175,15 @@ function App() {
           transition={{ duration: 0.6 }}
           className="section"
         >
-          <h2 className="section-title">For the Nerds (We Love You)</h2>
+          <h2 className="section-title">Open Infrastructure</h2>
           <div className="grid single-col">
             <div className="card self-host-card">
               <div className="card-icon large-icon">
-                <Server size={40} />
+                <Layers size={40} />
               </div>
               <div className="card-content">
-                <h3>Want to self-host the Relay Server?</h3>
-                <p>Don't trust our cloud? That's fair. KeenFresh is open-source friendly. We provide a <code>docker-compose.yml</code> so you can spin up your own secure signaling server on AWS EC2 or DigitalOcean in 5 minutes. Check out our GitHub!</p>
+                <h3>Self-Host the Signaling Server</h3>
+                <p>For organizations with strict compliance requirements, the entire KeenFresh signaling infrastructure is open-source. Utilize our provided <code>docker-compose.yml</code> to deploy your private matchmaking server on AWS or DigitalOcean within minutes.</p>
               </div>
             </div>
           </div>
@@ -201,11 +199,11 @@ function App() {
           className="highlight-section cta-section"
         >
           <div className="cta-content">
-            <h2>Ready to Touch Grass?</h2>
-            <p>Download the lightweight Windows client today and finally step away from your monitor.</p>
+            <h2>Experience Low-Latency Control</h2>
+            <p>Download the lightweight Windows client today and elevate your remote workflow.</p>
             <a href="https://github.com/adhilansari/remote-desktop/releases/latest" target="_blank" rel="noopener noreferrer" className="btn-primary massive pulse">
               <Download size={28} />
-              Get KeenFresh from GitHub
+              Download KeenFresh Desktop
             </a>
           </div>
         </motion.section>
@@ -213,18 +211,17 @@ function App() {
         {/* Footer */}
         <footer className="footer">
           <div className="footer-content">
-            <p className="author">Created by Adhil Ansari</p>
+            <p className="author">Designed & Developed by Adhil Ansari</p>
             <p className="note">
-              <em>(I may not be highly active on social media, but feel free to drop a message!)</em>
+              <em>(Open Source Remote Desktop Architecture)</em>
             </p>
             <div className="social-links">
               <a href="https://github.com/adhilansari" target="_blank" rel="noopener noreferrer">GitHub</a>
               <a href="https://www.linkedin.com/in/adhil-ansari-pv/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-              <a href="https://www.instagram.com/adhil_ansari_pv/" target="_blank" rel="noopener noreferrer">Instagram</a>
               <a href="https://adhilansari.vercel.app/" target="_blank" rel="noopener noreferrer">Portfolio</a>
             </div>
           </div>
-          <p className="copyright">&copy; {new Date().getFullYear()} KeenFresh Remote Architecture. Built for the modern couch potato.</p>
+          <p className="copyright">&copy; {new Date().getFullYear()} KeenFresh. All rights reserved.</p>
         </footer>
 
       </div>
