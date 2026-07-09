@@ -104,25 +104,40 @@ async function requestMedia(isSwap: boolean = false) {
     if (currentQuality === '720p30') { width = 1280; height = 720; }
     else if (currentQuality === '480p15') { width = 854; height = 480; }
 
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          chromeMediaSource: 'desktop'
-        }
-      } as any,
-      video: {
-        mandatory: {
-          chromeMediaSource: 'desktop',
-          chromeMediaSourceId: currentSourceId,
-          minWidth: width,
-          maxWidth: width,
-          minHeight: height,
-          maxHeight: height,
-          minFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15,
-          maxFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15
-        }
-      } as any
-    });
+    const videoConstraints = {
+      mandatory: {
+        chromeMediaSource: 'desktop',
+        chromeMediaSourceId: currentSourceId,
+        minWidth: width,
+        maxWidth: width,
+        minHeight: height,
+        maxHeight: height,
+        minFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15,
+        maxFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15
+      }
+    };
+
+    let newStream: MediaStream;
+    try {
+      // First try to capture Audio + Video
+      newStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          mandatory: {
+            chromeMediaSource: 'desktop'
+          }
+        } as any,
+        video: videoConstraints as any
+      });
+      ipcRenderer.send('log', 'Successfully captured Audio + Video');
+    } catch (e: any) {
+      ipcRenderer.send('log', 'Audio + Video capture failed (' + e.message + '), falling back to Video Only...');
+      // Fallback: Video Only
+      newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: videoConstraints as any
+      });
+      ipcRenderer.send('log', 'Successfully captured Video Only');
+    }
 
     if (isSwap && localStream && peerConnection) {
       // Stop old tracks

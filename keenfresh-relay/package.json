@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-relay",
-  "version": "1.8.49",
+  "version": "1.8.50",
   "description": "Relay node for KeenFresh WebRTC connections",
   "main": "index.js",
   "scripts": {
