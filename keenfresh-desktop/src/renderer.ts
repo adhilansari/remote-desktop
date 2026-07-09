@@ -4,6 +4,34 @@ import QRCode from 'qrcode';
 
 ipcRenderer.send('log', 'Renderer script loaded!');
 
+// Global Tab Switching Logic
+(window as any).switchTab = function(tabId: string, event: Event) {
+  // Update buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  if (event && event.currentTarget) {
+    (event.currentTarget as HTMLElement).classList.add('active');
+  }
+
+  // Update content
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  const target = document.getElementById('tab-' + tabId);
+  if (target) {
+    target.classList.add('active');
+  }
+};
+
+// Global Error Handler
+window.onerror = function(message, source, lineno, colno, error) {
+  const errDiv = document.getElementById('error-overlay');
+  if (errDiv) {
+    errDiv.style.display = 'block';
+    errDiv.innerHTML += 'ERROR: ' + message + ' at ' + source + ':' + lineno + '<br>';
+  }
+  try {
+    ipcRenderer.send('log', 'FATAL RENDERER ERROR: ' + message + ' at ' + source + ':' + lineno);
+  } catch (e) {}
+};
+
 function getLocalIp() {
   const nets = os.networkInterfaces();
   for (const name of Object.keys(nets)) {

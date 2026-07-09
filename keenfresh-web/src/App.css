@@ -1,3 +1,18 @@
+:root {
+  --bg-main: #050505;
+  --bg-card: rgba(15, 23, 42, 0.7);
+  --bg-glass: rgba(0, 0, 0, 0.3);
+  --primary-blue: #38bdf8;
+  --primary-cyan: #00f2fe;
+  --primary-emerald: #10b981;
+  --primary-red: #ef4444;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --border-glass: rgba(255, 255, 255, 0.15);
+  --border-glass-hover: rgba(255, 255, 255, 0.3);
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -9,10 +24,119 @@
 body, html, #root {
   width: 100%;
   height: 100%;
-  background-color: #050505;
+  background-color: var(--bg-main);
   overflow: hidden;
-  overscroll-behavior: none; /* Block native swipe-to-refresh / go back */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overscroll-behavior: none;
+  font-family: var(--font-primary);
+  color: var(--text-main);
+}
+
+/* UI Utilities */
+.gradient-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15) 0%, var(--bg-main) 60%);
+  overflow-y: auto;
+}
+
+.glass-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 40px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  transform: translateY(-2px);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-blue), #818cf8, #e879f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.glass-input {
+  width: 100%;
+  background: var(--bg-glass);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+}
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
+  border: none;
+  color: white;
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(56, 189, 248, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.dashboard-container {
+  overflow-y: auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-content {
+  width: 100%;
+  max-width: 600px;
+}
+
+.device-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.device-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
 }
 
 .joystick-area, .video-container {

@@ -91,8 +91,8 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
   };
 
   return (
-    <div className="gradient-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: '20px' }}>
-      <div className="glass-panel" style={{ padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+    <div className="gradient-bg">
+      <div className="glass-panel">
         <h1 className="text-gradient" style={{ fontSize: '32px', marginBottom: '10px' }}>KeenFresh</h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>
           {mode === 'register' ? 'Create your account' : 
@@ -109,7 +109,6 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
               onChange={e => setEmail(e.target.value)} 
               placeholder="Email Address" 
               className="glass-input" 
-              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
             />
           )}
           
@@ -120,7 +119,6 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
               onChange={e => setPassword(e.target.value)} 
               placeholder={mode === 'reset' ? 'New Password' : 'Password'} 
               className="glass-input" 
-              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
             />
           )}
 
@@ -131,14 +129,13 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
               onChange={e => setConfirmPassword(e.target.value)} 
               placeholder="Confirm Password" 
               className="glass-input" 
-              style={{ padding: '15px', borderRadius: '12px', fontSize: '16px' }} 
             />
           )}
 
-          {error && <div style={{ color: '#ef4444', fontSize: '14px', textAlign: 'left' }}>{error}</div>}
-          {success && <div style={{ color: '#10b981', fontSize: '14px', textAlign: 'left' }}>{success}</div>}
+          {error && <div style={{ color: 'var(--primary-red)', fontSize: '14px', textAlign: 'left' }}>{error}</div>}
+          {success && <div style={{ color: 'var(--primary-emerald)', fontSize: '14px', textAlign: 'left' }}>{success}</div>}
           
-          <button type="submit" className="btn-primary" style={{ padding: '15px', borderRadius: '12px', fontSize: '16px', marginTop: '10px' }}>
+          <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
             {mode === 'register' ? 'Register' : mode === 'forgot' ? 'Send Reset Link' : mode === 'reset' ? 'Update Password' : 'Log In'}
           </button>
         </form>
@@ -192,8 +189,8 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
   }, [token]);
 
   return (
-    <div className="gradient-bg" style={{ overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '600px' }}>
+    <div className="gradient-bg dashboard-container">
+      <div className="dashboard-content">
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <h1 className="text-gradient" style={{ fontSize: '36px', marginBottom: '8px' }}>KeenFresh</h1>
           <h2 style={{ fontSize: '18px', color: 'var(--text-main)', opacity: 0.8, fontWeight: 500 }}>Remote Desktop</h2>
@@ -212,8 +209,7 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
               {savedDevices.map(device => (
                 <div 
                   key={device.deviceId} 
-                  className="glass-panel" 
-                  style={{ display: 'flex', alignItems: 'center', padding: '20px', cursor: 'pointer', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                  className="device-card" 
                   onClick={() => {
                     onConnect(device.room);
                   }}

@@ -25,6 +25,7 @@ jobs:
             git reset --hard
             git pull origin main
             sudo docker compose down || true
+            pm2 delete all || true
             sudo systemctl restart docker
             sleep 3
             sudo docker system prune -f
