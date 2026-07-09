@@ -198,6 +198,35 @@
 
       <!-- SECURITY TAB -->
       <div id="tab-security" class="tab-content home-layout">
+        
+        <!-- NEW: Account Settings -->
+        <div class="card" id="account-settings-card" style="margin-bottom: 25px; display: none;">
+          <h2>Account Details</h2>
+          <p>Manage your account settings, session security, and connected email.</p>
+          
+          <div style="background: rgba(15,23,42,0.6); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: left; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="background: rgba(56, 189, 248, 0.2); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 20px;">👤</span>
+                </div>
+                <div>
+                  <h3 style="font-size: 16px; margin: 0; color: #e2e8f0;">Signed in as</h3>
+                  <div id="settings-email-display" style="color: #38bdf8; font-weight: 600; font-size: 14px; margin-top: 4px;">Loading...</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; align-items: center;">
+              <button id="btn-change-password" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px;">
+                <span>🔐</span> Change Password via Email
+              </button>
+            </div>
+            <div id="password-reset-status" style="font-size: 13px; color: #10b981; margin-top: 10px; display: none;">Password reset link sent to your email!</div>
+            <div id="password-reset-error" style="font-size: 13px; color: #ef4444; margin-top: 10px; display: none;"></div>
+          </div>
+        </div>
+
         <div class="card">
           <h2>Host Security</h2>
           <p>This optional PIN prevents unauthorized Unattended Access when using the 9-digit Offline Pairing Code.</p>

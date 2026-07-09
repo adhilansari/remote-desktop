@@ -578,6 +578,46 @@ if (btnSignOut) {
   });
 }
 
+const btnChangePassword = document.getElementById('btn-change-password');
+const passwordResetStatus = document.getElementById('password-reset-status');
+const passwordResetError = document.getElementById('password-reset-error');
+
+if (btnChangePassword) {
+  btnChangePassword.addEventListener('click', async () => {
+    const email = localStorage.getItem('keenfresh-email');
+    if (!email) return;
+    
+    const baseUrl = relayUrl || 'http://localhost:3000';
+    try {
+      const res = await fetch(`${baseUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      
+      if (passwordResetError) passwordResetError.style.display = 'none';
+      if (res.ok) {
+        if (passwordResetStatus) {
+          passwordResetStatus.innerText = data.message || 'Password reset link sent to your email!';
+          passwordResetStatus.style.display = 'block';
+          setTimeout(() => passwordResetStatus.style.display = 'none', 5000);
+        }
+      } else {
+        if (passwordResetError) {
+          passwordResetError.innerText = data.error || 'Failed to send reset email';
+          passwordResetError.style.display = 'block';
+        }
+      }
+    } catch (e: any) {
+      if (passwordResetError) {
+        passwordResetError.innerText = 'Network error connecting to relay';
+        passwordResetError.style.display = 'block';
+      }
+    }
+  });
+}
+
 let relayUrl = '';
 ipcRenderer.invoke('get-relay-url').then(url => {
   relayUrl = url;
@@ -590,6 +630,8 @@ function checkAuth() {
   const offlinePinView = document.getElementById('offline-pin-view');
   const syncedEmailView = document.getElementById('synced-email-view');
   const loggedInEmail = document.getElementById('logged-in-email');
+  const accountSettingsCard = document.getElementById('account-settings-card');
+  const settingsEmailDisplay = document.getElementById('settings-email-display');
   
   if (token) {
     if (authOverlay) authOverlay.style.display = 'none';
@@ -598,9 +640,13 @@ function checkAuth() {
     if (offlinePinView) offlinePinView.style.display = 'none';
     if (syncedEmailView) syncedEmailView.style.display = 'block';
     if (loggedInEmail) loggedInEmail.innerText = email || 'Authenticated User';
+    
+    if (accountSettingsCard) accountSettingsCard.style.display = 'block';
+    if (settingsEmailDisplay) settingsEmailDisplay.innerText = email || 'Authenticated User';
   } else {
     if (offlinePinView) offlinePinView.style.display = 'block';
     if (syncedEmailView) syncedEmailView.style.display = 'none';
+    if (accountSettingsCard) accountSettingsCard.style.display = 'none';
   }
 }
 

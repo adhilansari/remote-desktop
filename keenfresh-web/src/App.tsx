@@ -539,8 +539,14 @@ function App() {
 
     socket.on('disconnect', (reason) => {
       setConnected(false);
+      setStreamActive(false); // ALWAYS unset stream to show reconnect overlay
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      
       if (reason === "io server disconnect" || reason === "io client disconnect") {
-        setStreamActive(false);
+        // intentional disconnect
       } else {
         setIsReconnecting(true);
       }
