@@ -2,7 +2,7 @@
   "name": "keenfresh-desktop",
   "version": "1.8.45",
   "homepage": "https://github.com/adhilansari/remote-desktop",
-  "description": "Desktop host for KeenFresh remote control",
+  "description": "Desktop host for KeenFresh remote control application",
   "main": "dist/main.js",
   "scripts": {
     "clean": "node -e \"const fs=require('fs'); try { fs.rmSync('dist', {recursive:true, force:true, maxRetries: 5}); fs.rmSync('release', {recursive:true, force:true, maxRetries: 10, retryDelay: 500}); } catch(e) { console.log('Notice: Could not fully clean directories due to Windows file locks, continuing anyway...'); }\"",
