@@ -95,7 +95,7 @@ function App() {
           id="architecture"
         >
           <motion.h2 variants={fadeInUp} className="section-title">Engineered for Professional Workflows</motion.h2>
-          <div className="grid">
+          <div className="bento-grid">
             <motion.div variants={fadeInUp} className="card interactive">
               <div className="card-icon blue">
                 <Activity size={24} />
@@ -142,7 +142,7 @@ function App() {
           className="section"
         >
           <motion.h2 variants={fadeInUp} className="section-title">Enterprise-Grade Architecture</motion.h2>
-          <div className="grid">
+          <div className="bento-grid">
             <motion.div variants={fadeInUp} className="card interactive hover-blue">
               <div className="card-icon blue">
                 <Smartphone size={24} />
@@ -176,7 +176,7 @@ function App() {
           className="section"
         >
           <h2 className="section-title">Open Infrastructure</h2>
-          <div className="grid single-col">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', maxWidth: '800px', margin: '0 auto' }}>
             <div className="card self-host-card">
               <div className="card-icon large-icon">
                 <Layers size={40} />
