@@ -547,11 +547,19 @@ const btnLogin = document.getElementById('btn-login');
 const btnRegister = document.getElementById('btn-register');
 const btnForgot = document.getElementById('btn-forgot');
 const btnSkipLogin = document.getElementById('btn-skip-login');
+const btnSignOut = document.getElementById('btn-sign-out');
 
 if (btnSkipLogin) {
   btnSkipLogin.addEventListener('click', () => {
     if (authOverlay) authOverlay.style.display = 'none';
     ipcRenderer.send('user-logged-in', ''); // Connect without token
+  });
+}
+
+if (btnSignOut) {
+  btnSignOut.addEventListener('click', () => {
+    localStorage.removeItem('keenfresh-jwt');
+    window.location.reload(); // Reload the app to reset state and show login screen
   });
 }
 

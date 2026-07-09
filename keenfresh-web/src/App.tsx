@@ -303,6 +303,16 @@ function App() {
       localStorage.setItem('keenfresh_device_id', id);
     }
     setDeviceId(id);
+
+    // Auto-connect if ?pin= is present in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinParam = urlParams.get('pin');
+    if (pinParam) {
+      setPin(pinParam.toUpperCase());
+      setConnected(true);
+      // Clean up URL so refresh doesn't auto-reconnect if not desired
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
   const [streamActive, setStreamActive] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>('trackpad');
