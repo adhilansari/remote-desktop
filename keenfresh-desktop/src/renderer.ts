@@ -636,15 +636,27 @@ async function handleAuthRequest() {
     }
   }
 
+  // Disable button while loading
+  if (btnLogin) {
+    btnLogin.setAttribute('disabled', 'true');
+    btnLogin.innerText = 'Loading...';
+  }
+
   try {
+    const fetchedRelayUrl = await ipcRenderer.invoke('get-relay-url');
     const endpoint = authMode === 'register' ? '/auth/register' : authMode === 'forgot' ? '/auth/forgot-password' : '/auth/login';
-    const baseUrl = relayUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+    const baseUrl = fetchedRelayUrl.replace('ws://', 'http://').replace('wss://', 'https://');
     const res = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
+
+    if (btnLogin) {
+      btnLogin.removeAttribute('disabled');
+      resetAuthUI(); // Resets the button text appropriately
+    }
 
     if (res.ok) {
       if (authMode === 'forgot') {
@@ -661,6 +673,10 @@ async function handleAuthRequest() {
       authError.style.display = 'block';
     }
   } catch (e: any) {
+    if (btnLogin) {
+      btnLogin.removeAttribute('disabled');
+      resetAuthUI();
+    }
     authError.innerText = 'Network error connecting to relay';
     authError.style.display = 'block';
   }
