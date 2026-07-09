@@ -726,3 +726,17 @@ if (autostartToggle) {
     ipcRenderer.send('set-autostart', isEnabled);
   });
 }
+
+// PIN Visibility Toggle
+const togglePinVisibility = document.getElementById('toggle-pin-visibility');
+if (togglePinVisibility && hostPinInput) {
+  togglePinVisibility.addEventListener('click', () => {
+    if (hostPinInput.type === 'password') {
+      hostPinInput.type = 'text';
+      togglePinVisibility.style.opacity = '1';
+    } else {
+      hostPinInput.type = 'password';
+      togglePinVisibility.style.opacity = '0.6';
+    }
+  });
+}

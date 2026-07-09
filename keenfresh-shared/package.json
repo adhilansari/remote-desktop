@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-shared",
-  "version": "1.8.48",
+  "version": "1.8.49",
   "description": "Shared constants and types for KeenFresh",
   "main": "dist/index.js", "types": "dist/index.d.ts",
   "scripts": {

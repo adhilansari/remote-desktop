@@ -200,14 +200,22 @@
       <div id="tab-security" class="tab-content home-layout">
         <div class="card">
           <h2>Host Security</h2>
-          <p>Set a secret PIN to protect this computer from unauthorized access when you are away from the keyboard.</p>
+          <p>This optional PIN prevents unauthorized Unattended Access when using the 9-digit Offline Pairing Code.</p>
+          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 10px; border-radius: 8px;">
+            <span style="font-size: 16px;">ℹ️</span> <b>Note:</b> You do NOT need this PIN if you are securely connected to your own synced account.
+          </p>
 
           <div
             style="background: rgba(0,0,0,0.3); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px; text-align: left;">
             <label style="display: block; font-size: 13px; color: #94a3b8; font-weight: 600; margin-bottom: 10px;">Set
               6-Digit Host PIN</label>
-            <input type="password" id="host-pin-input" maxlength="6" placeholder="------"
-              style="width: 100%; background: rgba(15,23,42,0.8); border: 2px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; color: white; font-size: 24px; text-align: center; letter-spacing: 10px; margin-bottom: 15px; outline: none;">
+            <div style="position: relative; width: 100%; margin-bottom: 15px;">
+              <input type="password" id="host-pin-input" maxlength="6" placeholder="------"
+                style="width: 100%; background: rgba(15,23,42,0.8); border: 2px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; color: white; font-size: 24px; text-align: center; letter-spacing: 10px; outline: none; padding-right: 50px;">
+              <div id="toggle-pin-visibility" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; opacity: 0.6; transition: 0.2s; user-select: none;">
+                👁️
+              </div>
+            </div>
 
             <button id="save-host-pin-btn"
               style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; padding: 14px; border-radius: 12px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;">
