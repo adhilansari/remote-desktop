@@ -298,6 +298,7 @@ function Dashboard({ onConnect, token, email, onLogout }: { onConnect: (pin: str
  */
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('keenfresh-jwt'));
+  const [authEmail, setAuthEmail] = useState<string | null>(localStorage.getItem('keenfresh-email'));
   const [pin, setPin] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [deviceId, setDeviceId] = useState('');
