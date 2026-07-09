@@ -46,19 +46,34 @@
           <h2>Share This Desktop</h2>
           <p>Provide this Secure Pairing Code to another device to allow them to view and control this computer.</p>
 
-          <div class="pin-container" id="pin-container" style="position: relative;">
-            <div id="pin-blur-overlay"
-              style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border-radius: 20px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.3s ease;">
-              <span style="font-size: 36px; margin-bottom: 10px;">👁️</span>
-              <span style="font-weight: 600; font-size: 16px; color: #cbd5e1;">Click to Reveal Connection Code</span>
-              <span style="font-size: 12px; color: #94a3b8; margin-top: 8px;">(Hidden for security in public
-                spaces)</span>
+          <div id="connection-method-container">
+            <!-- OFFLINE PIN MODE -->
+            <div id="offline-pin-view">
+              <div class="pin-container" id="pin-container" style="position: relative;">
+                <div id="pin-blur-overlay"
+                  style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border-radius: 20px; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.3s ease;">
+                  <span style="font-size: 36px; margin-bottom: 10px;">👁️</span>
+                  <span style="font-weight: 600; font-size: 16px; color: #cbd5e1;">Click to Reveal Connection Code</span>
+                  <span style="font-size: 12px; color: #94a3b8; margin-top: 8px;">(Hidden for security in public spaces)</span>
+                </div>
+
+                <div class="pin-label">Secure Pairing Code</div>
+                <div id="pairing-code">------</div>
+                <div id="url-text">http://...</div>
+                <canvas id="qr-canvas" width="180" height="180"></canvas>
+              </div>
             </div>
 
-            <div class="pin-label">Secure Pairing Code</div>
-            <div id="pairing-code">------</div>
-            <div id="url-text">http://...</div>
-            <canvas id="qr-canvas" width="180" height="180"></canvas>
+            <!-- LOGGED IN SYNC MODE -->
+            <div id="synced-email-view" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px; padding: 30px; text-align: center;">
+              <div style="background: rgba(16, 185, 129, 0.2); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                <span style="font-size: 28px;">☁️</span>
+              </div>
+              <h3 style="color: #34d399; margin: 0 0 10px 0; font-size: 20px;">Successfully Synced</h3>
+              <p style="color: #cbd5e1; font-size: 14px; margin: 0 0 20px 0;">This computer is securely connected to:</p>
+              <div id="logged-in-email" style="font-size: 18px; font-weight: bold; color: white; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; display: inline-block;">user@email.com</div>
+              <p style="color: #94a3b8; font-size: 13px; margin: 20px 0 0 0; line-height: 1.5;">Open the KeenFresh app on your phone and tap this computer in the <b>"My Computers"</b> list to instantly connect.</p>
+            </div>
           </div>
 
           <!-- NEW: Connect to Remote Desktop -->

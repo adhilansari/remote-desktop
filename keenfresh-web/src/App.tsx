@@ -15,7 +15,7 @@ interface SavedDevice {
 
 const RELAY_URL = import.meta.env.DEV ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
 
-function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
+function AuthScreen({ onLogin }: { onLogin: (token: string, email: string) => void }) {
   const urlParams = new URLSearchParams(window.location.search);
   const resetToken = urlParams.get('token');
   
@@ -81,7 +81,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
       });
       const data = await res.json();
       if (res.ok && data.token) {
-        onLogin(data.token);
+        onLogin(data.token, data.email || email);
       } else {
         setError(data.error || 'Authentication failed');
       }
@@ -167,9 +167,10 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
  * @param {Object} props
  * @param {Function} props.onConnect - Callback triggered when the user taps a computer to connect.
  * @param {string} props.token - The user's JWT authentication token.
+ * @param {string} props.email - The user's logged-in email.
  * @param {Function} props.onLogout - Callback triggered to sign out the user.
  */
-function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) => void, token: string, onLogout: () => void }) {
+function Dashboard({ onConnect, token, email, onLogout }: { onConnect: (pin: string) => void, token: string, email: string | null, onLogout: () => void }) {
   const [savedDevices, setSavedDevices] = useState<SavedDevice[]>([]);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -202,6 +203,11 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
       <div className="dashboard-content">
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <h1 className="text-gradient" style={{ fontSize: '36px', marginBottom: '8px' }}>KeenFresh</h1>
+          {email && (
+            <div style={{ display: 'inline-block', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '6px 12px', borderRadius: '20px', color: '#38bdf8', fontSize: '14px', marginBottom: '15px' }}>
+              👤 {email}
+            </div>
+          )}
           <h2 style={{ fontSize: '18px', color: 'var(--text-main)', opacity: 0.8, fontWeight: 500 }}>Remote Desktop</h2>
         </div>
         
@@ -1131,19 +1137,19 @@ function App() {
       <>
         {!pin ? (
           !authToken ? (
-            <AuthScreen onLogin={(token) => {
+            <AuthScreen onLogin={(token, email) => {
               localStorage.setItem('keenfresh-jwt', token);
+              localStorage.setItem('keenfresh-email', email);
               setAuthToken(token);
+              setAuthEmail(email);
             }} />
           ) : (
-            <Dashboard 
-              token={authToken}
-              onConnect={setPin} 
-              onLogout={() => {
-                localStorage.removeItem('keenfresh-jwt');
-                setAuthToken(null);
-              }}
-            />
+            <Dashboard email={authEmail} onConnect={(p) => { setPin(p); setConnected(true); }} token={authToken} onLogout={() => {
+              localStorage.removeItem('keenfresh-jwt');
+              localStorage.removeItem('keenfresh-email');
+              setAuthToken(null);
+              setAuthEmail(null);
+            }} />
           )
         ) : null}
         {pwaInstallModal}

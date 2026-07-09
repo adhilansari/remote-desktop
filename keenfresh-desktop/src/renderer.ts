@@ -680,7 +680,7 @@ async function handleAuthRequest() {
         authSuccess.style.display = 'block';
       } else if (data.token) {
         localStorage.setItem('keenfresh-jwt', data.token);
-        localStorage.setItem('keenfresh-email', data.email);
+        localStorage.setItem('keenfresh-email', data.email || email);
         authError.style.display = 'none';
         checkAuth();
       }
