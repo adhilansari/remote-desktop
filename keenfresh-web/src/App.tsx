@@ -245,6 +245,34 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
           </div>
         )}
 
+        <div style={{ marginBottom: '40px', background: 'rgba(15,23,42,0.6)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <h3 style={{ fontSize: '16px', color: 'var(--text-main)', marginBottom: '12px', fontWeight: 600 }}>Connect Manually</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '15px' }}>Enter the 9-digit PIN of a desktop that isn't logged into your account.</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input 
+              type="text" 
+              placeholder="ABCD-1234" 
+              maxLength={9}
+              id="manual-pin-input"
+              style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', color: 'white', fontSize: '16px', outline: 'none', textTransform: 'uppercase' }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = (e.target as HTMLInputElement).value;
+                  if (val.length === 9 && val.includes('-')) onConnect(val.toUpperCase());
+                }
+              }}
+            />
+            <button 
+              onClick={() => {
+                const val = (document.getElementById('manual-pin-input') as HTMLInputElement).value;
+                if (val.length === 9 && val.includes('-')) onConnect(val.toUpperCase());
+              }}
+              style={{ background: 'var(--primary-blue)', border: 'none', borderRadius: '12px', padding: '0 20px', color: 'white', fontWeight: 600, cursor: 'pointer' }}>
+              Connect
+            </button>
+          </div>
+        </div>
+
         <div style={{ textAlign: 'center' }}>
           <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer' }}>
             Sign Out

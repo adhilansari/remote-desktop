@@ -546,6 +546,14 @@ const authSuccess = document.getElementById('auth-success');
 const btnLogin = document.getElementById('btn-login');
 const btnRegister = document.getElementById('btn-register');
 const btnForgot = document.getElementById('btn-forgot');
+const btnSkipLogin = document.getElementById('btn-skip-login');
+
+if (btnSkipLogin) {
+  btnSkipLogin.addEventListener('click', () => {
+    if (authOverlay) authOverlay.style.display = 'none';
+    ipcRenderer.send('user-logged-in', ''); // Connect without token
+  });
+}
 
 let relayUrl = '';
 ipcRenderer.invoke('get-relay-url').then(url => {
