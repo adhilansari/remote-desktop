@@ -260,6 +260,7 @@ h1, h2, h3, h4, .logo, .hero-tag {
   width: 100%;
   height: 100%;
   border: 1px solid rgba(255,255,255,0.1);
+  background: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=1000') center/cover;
   border-radius: 12px;
   position: relative;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -371,7 +372,6 @@ h1, h2, h3, h4, .logo, .hero-tag {
   align-items: center;
 }
 
-/* Highlight section with Parallax */
 .highlight-section {
   position: relative;
   border: 1px solid rgba(255,255,255,0.1);
@@ -381,6 +381,7 @@ h1, h2, h3, h4, .logo, .hero-tag {
   margin: 6rem 0;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  background: url('https://images.unsplash.com/photo-1531366936336-62e0672eceab?auto=format&fit=crop&q=80&w=2000') center/cover fixed;
 }
 
 .highlight-section::before {
