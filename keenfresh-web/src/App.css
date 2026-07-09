@@ -249,6 +249,39 @@ body, html, #root {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Responsive Media Queries for Mobile Web App */
+@media (max-width: 600px) {
+  .glass-panel {
+    padding: 30px 20px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+  }
+  .dashboard-container {
+    padding: 20px 15px;
+  }
+  .device-card {
+    padding: 15px;
+    border-radius: 12px;
+  }
+  .text-gradient {
+    font-size: 28px !important;
+  }
+  .glass-input, .btn-primary {
+    padding: 14px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .glass-panel {
+    padding: 25px 15px;
+  }
+  .text-gradient {
+    font-size: 24px !important;
+  }
+}
+
 /* Floating Dock */
 .top-toolbar-container {
   position: absolute;

@@ -50,7 +50,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, any, any>(serv
 });
 
 // Setup Redis Adapter for PM2 Cluster Mode scaling
-const pubClient = new Redis({
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const pubClient = new Redis(redisUrl, {
   retryStrategy(times) {
     console.warn(`Retrying Redis connection... attempt ${times}`);
     return Math.min(times * 50, 2000);

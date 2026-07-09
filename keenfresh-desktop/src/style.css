@@ -394,7 +394,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
 /* Responsive Media Queries */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .app-container {
     flex-direction: column;
   }
@@ -435,6 +435,7 @@ body {
   }
   .card {
     padding: 30px 20px;
+    max-width: 100%;
   }
   #pairing-code {
     font-size: 28px;
@@ -448,5 +449,32 @@ body {
   }
   .sidebar-footer {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 20px;
+  }
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .content-area {
+    padding: 15px;
+  }
+  .card {
+    padding: 20px 15px;
+  }
+  .card h2 {
+    font-size: 22px;
+  }
+  #pairing-code {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+  #btn-sign-out {
+    width: 100%;
+    margin: 10px 0;
   }
 }
