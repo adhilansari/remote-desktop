@@ -570,9 +570,22 @@ ipcRenderer.invoke('get-relay-url').then(url => {
 
 function checkAuth() {
   const token = localStorage.getItem('keenfresh-jwt');
+  const email = localStorage.getItem('keenfresh-email');
+  
+  const offlinePinView = document.getElementById('offline-pin-view');
+  const syncedEmailView = document.getElementById('synced-email-view');
+  const loggedInEmail = document.getElementById('logged-in-email');
+  
   if (token) {
     if (authOverlay) authOverlay.style.display = 'none';
     ipcRenderer.send('user-logged-in', token);
+    
+    if (offlinePinView) offlinePinView.style.display = 'none';
+    if (syncedEmailView) syncedEmailView.style.display = 'block';
+    if (loggedInEmail) loggedInEmail.innerText = email || 'Authenticated User';
+  } else {
+    if (offlinePinView) offlinePinView.style.display = 'block';
+    if (syncedEmailView) syncedEmailView.style.display = 'none';
   }
 }
 

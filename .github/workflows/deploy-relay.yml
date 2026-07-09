@@ -25,10 +25,5 @@ jobs:
             git reset --hard
             git pull origin main
             sudo docker compose down || true
-            pm2 delete all || true
-            sudo systemctl restart docker
-            sleep 3
             sudo docker system prune -f
-            sudo lsof -ti:3000 | xargs sudo kill -9 || true
-            sudo fuser -k 3000/tcp || true
             sudo docker compose up -d --build
