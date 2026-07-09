@@ -70,6 +70,14 @@ app.get('/health', (req, res) => {
 // Store active desktops by socket ID
 export const activeDesktops = new Map<string, { userId: number, email: string, deviceName: string, room: string, isLocked: boolean }>();
 
+/**
+ * GET /api/desktops
+ * Fetches the list of active Desktop devices connected to the relay for the currently authenticated user.
+ * This powers the "My Computers" dashboard on the Mobile Web App.
+ * 
+ * @requires Authorization header with a valid JWT token.
+ * @returns {Array} List of desktop devices matching the user's ID.
+ */
 app.get('/api/desktops', (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });

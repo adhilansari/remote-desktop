@@ -50,6 +50,12 @@ dialog.showErrorBox = function(title, content) {
   console.log(`[ErrorBox Suppressed] ${title}\n${content}`);
 };
 
+/**
+ * Creates the primary Electron hidden window that hosts the UI and WebRTC logic.
+ * The window is hidden on startup if the '--hidden' argument is provided (e.g. auto-start mode).
+ * 
+ * @returns {void}
+ */
 function createHiddenWindow() {
   Menu.setApplicationMenu(null); // Remove default File/Edit/View menu
 
@@ -94,6 +100,12 @@ function createHiddenWindow() {
   });
 }
 
+/**
+ * Generates a cryptographically secure 9-character connection PIN (e.g., ABCD-1234).
+ * Ambiguous characters (0, O, 1, I) are excluded to prevent user error.
+ * 
+ * @returns {string} The generated pairing code.
+ */
 function generateSecurePin() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars like 0, O, 1, I
   let p1 = '';
@@ -232,6 +244,13 @@ app.on('window-all-closed', () => {
 
 const RELAY_SERVER_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
 
+/**
+ * Establishes a Socket.IO connection to the Signaling (Relay) Server.
+ * Must provide a valid JWT token to authenticate the desktop with the user's account.
+ * 
+ * @param {string} jwtToken - The authentication token retrieved after user login.
+ * @returns {void}
+ */
 function connectToRelay(jwtToken: string) {
   if (socket) {
     socket.disconnect();

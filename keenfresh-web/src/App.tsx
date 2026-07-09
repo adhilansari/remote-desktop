@@ -160,6 +160,15 @@ function AuthScreen({ onLogin }: { onLogin: (token: string) => void }) {
   );
 }
 
+/**
+ * The Dashboard Component displays a list of the user's active computers.
+ * It periodically polls the Relay server to keep the online status up to date.
+ * 
+ * @param {Object} props
+ * @param {Function} props.onConnect - Callback triggered when the user taps a computer to connect.
+ * @param {string} props.token - The user's JWT authentication token.
+ * @param {Function} props.onLogout - Callback triggered to sign out the user.
+ */
 function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) => void, token: string, onLogout: () => void }) {
   const [savedDevices, setSavedDevices] = useState<SavedDevice[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -247,6 +256,12 @@ function Dashboard({ onConnect, token, onLogout }: { onConnect: (pin: string) =>
   );
 }
 
+/**
+ * The main App component orchestrates the overall flow of the Mobile Controller.
+ * It manages routing between the Authentication screen, the Dashboard, and the WebRTC Remote Control interface.
+ * 
+ * Flow: AuthScreen -> Dashboard -> Remote Control (Video Stream & Input)
+ */
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('keenfresh-jwt'));
   const [pin, setPin] = useState<string | null>(null);

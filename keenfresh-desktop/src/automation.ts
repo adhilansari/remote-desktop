@@ -6,6 +6,12 @@ import { exec } from 'child_process';
   // Remove native artificial delay to ensure buttery smooth mouse movements
   mouse.config.autoDelayMs = 0;
 
+/**
+ * Translates relative percentage coordinates from the web app (0.0 to 1.0)
+ * into absolute pixel coordinates and moves the system cursor instantly.
+ * 
+ * @param {Object} data - Contains x and y percentages (e.g. {x: 0.5, y: 0.5} for screen center).
+ */
 export async function handleAbsoluteMove(data: { x: number, y: number }) {
   try {
     const width = await screen.width();
@@ -18,6 +24,11 @@ export async function handleAbsoluteMove(data: { x: number, y: number }) {
   }
 }
 
+/**
+ * Simulates a native double-click for the specified mouse button.
+ * 
+ * @param {Object} data - Specifies which button to double-click ('left' or 'right').
+ */
 export async function handleDoubleClick(data: { button: 'left' | 'right' }) {
   try {
     const btn = data.button === 'left' ? Button.LEFT : Button.RIGHT;
@@ -34,6 +45,12 @@ let isMoving = false;
 let pendingDx = 0;
 let pendingDy = 0;
 
+/**
+ * Handles continuous delta (dx, dy) trackpad movements from the mobile client.
+ * Employs a buffering strategy to prevent event flooding and ensure buttery smooth movement.
+ * 
+ * @param {Object} data - Contains the pixel delta (dx, dy) to move the cursor.
+ */
 export async function handleMouseMove(data: any) {
   try {
     pendingDx += data.dx;
