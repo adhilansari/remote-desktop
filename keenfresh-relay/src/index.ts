@@ -99,6 +99,20 @@ app.get('/api/desktops', (req, res) => {
   res.json(userDesktops);
 });
 
+app.get('/api/debug-desktops', (req, res) => {
+  const allDesktops: any[] = [];
+  activeDesktops.forEach((info, socketId) => {
+    allDesktops.push({
+      deviceId: socketId,
+      userId: info.userId,
+      email: info.email,
+      deviceName: info.deviceName,
+      room: info.room
+    });
+  });
+  res.json(allDesktops);
+});
+
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 

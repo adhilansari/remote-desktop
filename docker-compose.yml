@@ -15,7 +15,17 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET:-super_secret_keenfresh_key_change_in_prod}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
     # To run behind a reverse proxy like Nginx or Cloudflare, ensure 3000 is open locally
+
+  redis:
+    image: redis:alpine
+    container_name: keenfresh-redis
+    restart: always
+    ports:
+      - "6379:6379"
 
 volumes:
   keenfresh-data:
