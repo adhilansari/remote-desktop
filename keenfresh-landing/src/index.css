@@ -19,6 +19,7 @@
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-color);
+  background: linear-gradient(rgba(10, 11, 22, 0.8), rgba(10, 11, 22, 0.95)), url('https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&q=80&w=2560') center/cover fixed;
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
@@ -305,7 +306,7 @@ h1, h2, h3, h4, .logo, .hero-tag {
 /* Bento Box Grid */
 .bento-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   grid-template-rows: auto;
   gap: 1.5rem;
 }
