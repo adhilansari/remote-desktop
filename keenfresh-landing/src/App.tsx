@@ -70,18 +70,10 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 1 }}
             className="hero-image-container"
+            style={{ position: 'relative', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center' }}
           >
-            <div className="hero-app-mockup">
-              <div className="mockup-header">
-                <div className="dots"><span></span><span></span><span></span></div>
-                <div className="url-bar">app.keenfresh.com</div>
-              </div>
-              <div className="mockup-body" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <div className="screen-content">
-                  <div className="stream-overlay" style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.6)' }}>Live 60FPS WebRTC Stream</div>
-                </div>
-              </div>
-            </div>
+            <img src="/desktop-nature.png" alt="KeenFresh Desktop Concept" style={{ width: '100%', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', zIndex: 1, position: 'relative' }} />
+            <img src="/mobile-nature.png" alt="KeenFresh Mobile Concept" style={{ position: 'absolute', width: '32%', bottom: '-5%', right: '-5%', borderRadius: '20px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.1)', zIndex: 2 }} />
           </motion.div>
         </motion.header>
 
