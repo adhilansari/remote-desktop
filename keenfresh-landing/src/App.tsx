@@ -19,10 +19,10 @@ function App() {
     <>
       <div className="bg-glow"></div>
       <div className="bg-glow secondary"></div>
-      
+
       <div className="container">
         {/* Navbar */}
-        <motion.nav 
+        <motion.nav
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -40,7 +40,7 @@ function App() {
         </motion.nav>
 
         {/* Hero Section */}
-        <motion.header 
+        <motion.header
           variants={staggerContainer}
           initial="hidden"
           animate="show"
@@ -64,8 +64,8 @@ function App() {
               Explore Architecture <ArrowRight size={18} />
             </a>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 1 }}
@@ -78,7 +78,7 @@ function App() {
         </motion.header>
 
         {/* Use Cases */}
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
@@ -113,20 +113,19 @@ function App() {
         </motion.div>
 
         {/* Highlight Solution */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="highlight-section glow-border"
-          style={{ backgroundImage: 'linear-gradient(rgba(3,3,5,0.8), rgba(3,3,5,0.9)), url(https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <h2>A Modern Approach to Remote Desktop.</h2>
           <p>Traditional remote applications are burdened by commercial bloatware and complex network configurations. KeenFresh offers a lightweight, open-source architecture that maps your mobile screen to your desktop monitor pixel-for-pixel with zero latency.</p>
         </motion.section>
 
         {/* Features */}
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-100px" }}
@@ -160,7 +159,7 @@ function App() {
         </motion.div>
 
         {/* Self Hosting Guide */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -182,12 +181,12 @@ function App() {
         </motion.div>
 
         {/* CTA */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          id="download" 
+          id="download"
           className="highlight-section cta-section"
         >
           <div className="cta-content">
