@@ -573,6 +573,8 @@ function App() {
         pc.ontrack = (e) => {
           if (videoRef.current) {
             videoRef.current.srcObject = e.streams[0];
+            // Force play to fix mobile browsers ignoring autoPlay attribute on MediaStreams
+            videoRef.current.play().catch(err => console.warn('Mobile video auto-play blocked:', err));
             setStreamActive(true);
           }
         };
