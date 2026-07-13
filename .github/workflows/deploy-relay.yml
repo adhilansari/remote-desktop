@@ -28,15 +28,20 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             
-            # 3. Stop existing containers
+            # 3. Stop legacy PM2 instances to free up Port 3000
+            # (If the server was previously deployed via deploy-aws.js, PM2 will block Docker from binding to port 3000)
+            pm2 delete keenfresh-relay || true
+            pm2 save --force || true
+            
+            # 4. Stop existing Docker containers
             sudo docker compose down || true
             
-            # 4. Clear corrupted BuildKit cache to fix 'snapshot not found' errors
+            # 5. Clear corrupted BuildKit cache to fix 'snapshot not found' errors
             sudo docker builder prune -f
             
-            # 5. Build and start the containers from scratch (no-cache prevents snapshot issues)
+            # 6. Build and start the containers from scratch (no-cache prevents snapshot issues)
             sudo docker compose build --no-cache
             sudo docker compose up -d
             
-            # 6. Safely remove old dangling images only AFTER the new container is running
+            # 7. Safely remove old dangling images only AFTER the new container is running
             sudo docker system prune -f
