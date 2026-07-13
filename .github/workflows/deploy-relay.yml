@@ -7,6 +7,7 @@ on:
       - 'keenfresh-relay/**'
       - 'keenfresh-shared/**'
       - 'docker-compose.yml'
+      - '.github/workflows/deploy-relay.yml'
   workflow_dispatch:
 
 jobs:
