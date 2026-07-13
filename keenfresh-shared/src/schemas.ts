@@ -1,32 +1,50 @@
 import { z } from 'zod';
 
+/**
+ * Schema for relative mouse movement payloads.
+ */
 export const MouseMoveSchema = z.object({
   dx: z.number(),
   dy: z.number(),
   speed: z.number(),
 });
 
+/**
+ * Schema for mouse click events.
+ */
 export const MouseClickSchema = z.object({
   button: z.enum(['left', 'right']),
   action: z.enum(['down', 'up']),
 });
 
+/**
+ * Schema for scroll wheel events.
+ */
 export const MouseScrollSchema = z.object({
   direction: z.enum(['up', 'down']),
   amount: z.number(),
 });
 
+/**
+ * Schema for keyboard events including modifier keys.
+ */
 export const KeyEventSchema = z.object({
   key: z.string(),
   modifiers: z.array(z.string()),
   action: z.enum(['down', 'up']),
 });
 
+/**
+ * Schema for syncing application settings between client and host.
+ */
 export const SettingsSyncSchema = z.object({
   key: z.string(),
   value: z.any(),
 });
 
+/**
+ * Schema for room connection and authentication requests.
+ */
 export const RoomJoinSchema = z.object({
   pin: z.string().optional(),
   clientType: z.enum(['desktop', 'mobile']),

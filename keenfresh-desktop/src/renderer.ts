@@ -60,6 +60,8 @@ async function initUI() {
     url = `https://app.keenfresh.com/?pin=${code}`;
     const urlText = document.getElementById('url-text');
     if (urlText) urlText.innerText = url;
+    const syncedUrlText = document.getElementById('synced-url-text');
+    if (syncedUrlText) syncedUrlText.innerText = 'https://app.keenfresh.com';
   } catch (e) {
     console.error('Failed to fetch pairing code', e);
   }
@@ -76,6 +78,20 @@ async function initUI() {
     }, (error) => {
       if (error) console.error(error);
       ipcRenderer.send('log', 'QR Code generated for ' + url);
+    });
+  }
+
+  const syncedCanvas = document.getElementById('synced-qr-canvas');
+  if (syncedCanvas) {
+    QRCode.toCanvas(syncedCanvas, 'https://app.keenfresh.com', {
+      width: 150,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    }, (error) => {
+      if (error) console.error(error);
     });
   }
 }
@@ -98,6 +114,12 @@ const rtcConfig = {
   ]
 };
 
+/**
+ * Captures the desktop video/audio stream using Chromium's desktop capture API.
+ * Optionally swaps the video track dynamically if the user changes screen sources or quality.
+ *
+ * @param {boolean} isSwap - If true, replaces the video track in the existing WebRTC connection instead of creating a new one.
+ */
 async function requestMedia(isSwap: boolean = false) {
   try {
     let width = 1920; let height = 1080;
@@ -186,6 +208,10 @@ async function startScreenShare() {
   }
 }
 
+/**
+ * Initializes the RTCPeerConnection, sets up the DataChannel for automation inputs,
+ * adds the local desktop media stream, and creates the WebRTC Offer to send to the Relay.
+ */
 async function initiateWebRTC() {
   if (peerConnection) {
     peerConnection.close();

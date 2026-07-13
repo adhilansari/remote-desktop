@@ -6,6 +6,10 @@ import db from './db';
 const router = express.Router();
 export const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_keenfresh_key_change_in_prod';
 
+/**
+ * POST /register
+ * Registers a new user with a hashed password and returns a JWT token.
+ */
 router.post('/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -34,6 +38,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
+/**
+ * POST /login
+ * Authenticates a user by validating their password hash and returns a JWT token.
+ */
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -72,6 +80,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/**
+ * POST /forgot-password
+ * Generates a secure, temporary password reset token and emails it to the user.
+ */
 router.post('/forgot-password', (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required' });

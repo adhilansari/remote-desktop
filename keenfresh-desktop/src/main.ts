@@ -385,11 +385,17 @@ function connectToRelay(jwtToken: string) {
     hiddenWindow?.webContents.send('webrtc-signal', data);
   });
 
+  /**
+   * Forwards WebRTC signaling (SDP/ICE) from the local Chromium Renderer to the backend Relay server.
+   */
   ipcMain.on('webrtc-signal', (event, data) => {
     socket?.emit('webrtc-signal', data);
   });
 
-  // Handle inputs from WebRTC DataChannel (routed via renderer)
+  /**
+   * Handles inputs received from the WebRTC DataChannel (routed via renderer process).
+   * Orchestrates the actual automation of the host computer using Robot.js / nut.js.
+   */
   ipcMain.on('webrtc-input', async (event, payload) => {
     const { type, data } = payload;
     if (type === 'mouse-move') await handleMouseMove(data);

@@ -1,6 +1,11 @@
 import { Download, Smartphone, ShieldCheck, Layers, Server, Globe, ArrowRight, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+/**
+ * Landing Page Application
+ * Static React single-page application marketing KeenFresh.
+ * Hosted via AWS EC2 or Vercel depending on deployment logic.
+ */
 function App() {
   const staggerContainer = {
     hidden: { opacity: 0 },

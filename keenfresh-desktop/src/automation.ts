@@ -51,6 +51,9 @@ let pendingDy = 0;
  * 
  * @param {Object} data - Contains the pixel delta (dx, dy) to move the cursor.
  */
+/**
+ * Specifically presses and holds the left mouse button. Used for drag operations.
+ */
 export async function handleMouseMove(data: any) {
   try {
     pendingDx += data.dx;
@@ -85,6 +88,12 @@ export async function handleMouseMove(data: any) {
   }
 }
 
+/**
+ * Simulates a mouse button press or release based on input data.
+ * Useful for dragging operations or native clicks.
+ * 
+ * @param {Object} data - Contains the target button ('left', 'right', 'middle') and action ('down', 'up', 'click').
+ */
 export async function handleMouseClick(data: any) {
   try {
     const btn = data.button === 'right' ? Button.RIGHT : data.button === 'middle' ? Button.MIDDLE : Button.LEFT;

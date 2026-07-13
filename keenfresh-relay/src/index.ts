@@ -114,9 +114,19 @@ app.get('/api/debug-desktops', (req, res) => {
   res.json(allDesktops);
 });
 
+/**
+ * Main Socket.IO connection handler.
+ * Manages Room orchestration between Desktop Hosts and Mobile Clients,
+ * and passes WebRTC signaling data back and forth.
+ */
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  /**
+   * join-room Event
+   * Triggered when either a Desktop creates a room or a Mobile device attempts to connect.
+   * Includes rate-limiting via Redis to prevent brute-force attacks on connection pins.
+   */
   socket.on('join-room', async (data: RoomPayload) => {
     try {
       // Basic IP Rate Limiting for brute force protection (max 10 attempts per minute)
@@ -186,6 +196,11 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  /**
+   * connection-accepted Event
+   * Triggered by the Desktop host when the user clicks 'Accept' on the connection prompt.
+   * Tells the mobile client to finalize their room join.
+   */
   socket.on('connection-accepted', (data: { targetClientId: string }) => {
     io.to(data.targetClientId).emit('connection-accepted', { room: (socket as any).room });
   });
@@ -194,6 +209,11 @@ io.on('connection', (socket: Socket) => {
     io.to(data.targetClientId).emit('connection-rejected', { reason: data.reason || 'Connection declined by desktop' });
   });
 
+  /**
+   * finalize-join Event
+   * Triggered by the mobile client after receiving 'connection-accepted'.
+   * Officially moves the socket into the Socket.io room to begin WebRTC signaling.
+   */
   socket.on('finalize-join', () => {
     const room = (socket as any).pendingRoom;
     const role = (socket as any).pendingRole;
@@ -211,6 +231,11 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  /**
+   * disconnect Event
+   * Cleans up room state when a client disconnects. If the Desktop host drops,
+   * it kicks all mobile clients out of the room.
+   */
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
     const room = (socket as any).room;

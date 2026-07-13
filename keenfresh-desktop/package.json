@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-desktop",
-  "version": "1.8.53",
+  "version": "1.8.54",
   "homepage": "https://github.com/adhilansari/remote-desktop",
   "description": "Desktop host for KeenFresh remote control application",
   "main": "dist/main.js",

@@ -15,6 +15,13 @@ interface SavedDevice {
 
 const RELAY_URL = import.meta.env.DEV ? 'http://localhost:3000' : 'https://relay.keenfresh.com';
 
+/**
+ * AuthScreen Component
+ * Handles the login, registration, and password reset flows for the mobile web client.
+ * Communicates with the KeenFresh Relay server over REST.
+ * 
+ * @param onLogin Callback fired when authentication succeeds, passing the JWT token.
+ */
 function AuthScreen({ onLogin }: { onLogin: (token: string, email: string) => void }) {
   const urlParams = new URLSearchParams(window.location.search);
   const resetToken = urlParams.get('token');
@@ -109,6 +116,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string, email: string) => vo
               onChange={e => setEmail(e.target.value)} 
               placeholder="Email Address" 
               className="glass-input" 
+              autoComplete="username"
             />
           )}
           
@@ -119,6 +127,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string, email: string) => vo
               onChange={e => setPassword(e.target.value)} 
               placeholder={mode === 'reset' ? 'New Password' : 'Password'} 
               className="glass-input" 
+              autoComplete={mode === 'register' || mode === 'reset' ? 'new-password' : 'current-password'}
             />
           )}
 
@@ -129,6 +138,7 @@ function AuthScreen({ onLogin }: { onLogin: (token: string, email: string) => vo
               onChange={e => setConfirmPassword(e.target.value)} 
               placeholder="Confirm Password" 
               className="glass-input" 
+              autoComplete="new-password"
             />
           )}
 
@@ -295,6 +305,11 @@ function Dashboard({ onConnect, token, email, onLogout }: { onConnect: (pin: str
  * It manages routing between the Authentication screen, the Dashboard, and the WebRTC Remote Control interface.
  * 
  * Flow: AuthScreen -> Dashboard -> Remote Control (Video Stream & Input)
+ */
+/**
+ * Main Web Client Application
+ * Connects to the KeenFresh Relay via Socket.io and orchestrates WebRTC PeerConnections.
+ * Handles the mobile touch interfaces (virtual trackpad, direct touch, keyboards) and streams video.
  */
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('keenfresh-jwt'));

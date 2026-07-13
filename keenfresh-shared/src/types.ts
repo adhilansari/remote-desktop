@@ -5,6 +5,9 @@ export type StreamQuality = '480p' | '720p' | '1080p';
 export type JoystickSize = 'small' | 'medium' | 'large';
 export type Theme = 'dark' | 'light';
 
+/**
+ * Global application settings stored and synced between the desktop host and web client.
+ */
 export interface AppSettings {
   mouseSpeed: number;
   scrollSpeed: number;
@@ -17,6 +20,9 @@ export interface AppSettings {
   autoConnect: boolean;
 }
 
+/**
+ * Represents a relative mouse movement request.
+ */
 export interface MouseMovePayload {
   dx: number;
   dy: number;
@@ -86,6 +92,9 @@ export interface SignalPayload {
   [key: string]: any;
 }
 
+/**
+ * Type definitions for events emitted by the Server and listened to by Clients (Web/Desktop).
+ */
 export interface ServerToClientEvents {
   'room-joined': (data: { room: string, role: string, otherClientIds: string[] }) => void;
   'room-error': (data: { message: string }) => void;
@@ -115,6 +124,9 @@ export interface ServerToClientEvents {
   'pong': () => void;
 }
 
+/**
+ * Type definitions for events emitted by Clients and listened to by the Server.
+ */
 export interface ClientToServerEvents {
   'join-room': (data: RoomPayload) => void;
   'finalize-join': () => void;
