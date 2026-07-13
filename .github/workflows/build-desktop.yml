@@ -39,29 +39,56 @@ jobs:
         working-directory: ./keenfresh-desktop
         run: npm ci
 
-
-
-      - name: Build and Publish Windows App
+      - name: Build Windows App
         if: matrix.os == 'windows-latest'
         working-directory: ./keenfresh-desktop
-        run: npm run release:win
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run pack:win
 
-      - name: Build and Publish Mac App
+      - name: Build Mac App
         if: matrix.os == 'macos-13'
         working-directory: ./keenfresh-desktop
-        run: npm run release:mac
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run pack:mac
 
       - name: Install Linux Build Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
 
-      - name: Build and Publish Linux App
+      - name: Build Linux App
         if: matrix.os == 'ubuntu-latest'
         working-directory: ./keenfresh-desktop
-        run: npm run release:linux
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run pack:linux
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: |
+            keenfresh-desktop/release/*.exe
+            keenfresh-desktop/release/*.dmg
+            keenfresh-desktop/release/*.AppImage
+            keenfresh-desktop/release/*.deb
+            keenfresh-desktop/release/*.yml
+            keenfresh-desktop/release/*.blockmap
+            keenfresh-desktop/release/*.zip
+          retention-days: 1
+          if-no-files-found: ignore
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          pattern: artifacts-*
+          merge-multiple: true
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**
+          draft: false
+          prerelease: false
+          generate_release_notes: true
