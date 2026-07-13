@@ -42,6 +42,9 @@ for (const project of projects) {
   }
 }
 
+console.log(`\n[RELEASE] Syncing package-lock.json...`);
+execSync('npm install --package-lock-only --ignore-scripts', { stdio: 'inherit' });
+
 // 3. Commit, Tag, and Push to trigger GitHub Actions
 console.log(`\n[RELEASE] Automating Git Commit and Tagging...`);
 try {
