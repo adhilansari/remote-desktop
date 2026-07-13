@@ -2,10 +2,8 @@ name: Build Desktop App
 
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - 'keenfresh-desktop/**'
-      - 'keenfresh-shared/**'
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
 
 permissions:
