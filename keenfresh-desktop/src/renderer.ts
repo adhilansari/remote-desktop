@@ -130,11 +130,8 @@ async function requestMedia(isSwap: boolean = false) {
       mandatory: {
         chromeMediaSource: 'desktop',
         chromeMediaSourceId: currentSourceId,
-        minWidth: width,
         maxWidth: width,
-        minHeight: height,
         maxHeight: height,
-        minFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15,
         maxFrameRate: currentQuality === '1080p60' ? 60 : currentQuality === '720p30' ? 30 : 15
       }
     };

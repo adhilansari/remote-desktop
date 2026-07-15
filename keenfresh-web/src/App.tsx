@@ -1191,7 +1191,7 @@ function App() {
         style={{ display: 'none' }} 
       />
       <div className="app-container">
-      <div className="video-container" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
+      <div className="video-container" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }} onClick={() => videoRef.current?.play()}>
         <video
           ref={videoRef}
           onLoadedMetadata={() => { if (autoFillEnabled) applyAutoFill(); }}
@@ -1199,7 +1199,11 @@ function App() {
           playsInline
           muted={!audioEnabled}
           className="stream-video"
-          style={{ display: streamActive ? 'block' : 'none', objectFit: zoomMode }}
+          style={{ 
+            opacity: streamActive ? 1 : 0, 
+            visibility: streamActive ? 'visible' : 'hidden', 
+            objectFit: zoomMode 
+          }}
         />
       </div>
       
