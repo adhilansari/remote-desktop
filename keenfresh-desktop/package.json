@@ -1,6 +1,6 @@
 {
   "name": "keenfresh-desktop",
-  "version": "1.8.59",
+  "version": "1.8.60",
   "homepage": "https://github.com/adhilansari/remote-desktop",
   "description": "Desktop host for KeenFresh remote control application",
   "main": "dist/main.js",
@@ -10,9 +10,9 @@
     "build:tsc": "tsc",
     "build": "npm run clean && npm run build:tsc && npm run copy-assets",
     "start": "npm run build && electron .",
-    "pack:win": "npm run build && electron-builder --win",
-    "pack:mac": "npm run build && electron-builder --mac",
-    "pack:linux": "npm run build && electron-builder --linux",
+    "pack:win": "npm run build && electron-builder --win -p never",
+    "pack:mac": "npm run build && electron-builder --mac -p never",
+    "pack:linux": "npm run build && electron-builder --linux -p never",
     "release:win": "npm run build && electron-builder --win -p always",
     "release:mac": "npm run build && electron-builder --mac -p always",
     "release:linux": "npm run build && electron-builder --linux -p always"
